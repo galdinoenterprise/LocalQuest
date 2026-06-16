@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>LocalQuest – Descubra sua cidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --g50: #f0fdf4; --g100: #dcfce7; --g200: #bbf7d0; --g300: #86efac;
+    --g400: #4ade80; --g500: #22c55e; --g600: #16a34a; --g700: #15803d;
+    --b50: #eff6ff; --b100: #dbeafe; --b200: #bfdbfe; --b300: #93c5fd;
+    --b400: #60a5fa; --b500: #3b82f6; --b600: #2563eb; --b700: #1d4ed8;
+    --n0: #fff; --n50: #f8fafc; --n100: #f1f5f9; --n200: #e2e8f0;
+    --n300: #cbd5e1; --n400: #94a3b8; --n500: #64748b; --n600: #475569;
+    --n700: #334155; --n800: #1e293b; --n900: #0f172a;
+    --accent: #06b6d4; --warn: #f59e0b; --danger: #ef4444;
+    --grad-main: linear-gradient(135deg, #16a34a 0%, #0284c7 100%);
+    --grad-hero: linear-gradient(160deg, #064e3b 0%, #0c4a6e 60%, #1e1b4b 100%);
+    --grad-card: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.85) 100%);
+    --radius: 16px; --radius-sm: 10px; --radius-xl: 24px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.10); --shadow-lg: 0 8px 40px rgba(0,0,0,0.18);
+    --nav-h: 64px; --tab-h: 72px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Inter', sans-serif; background: var(--n50); color: var(--n800); overflow-x: hidden; }
+  .display { font-family: 'Space Grotesk', sans-serif; }
+
+  /* ===== SCREENS ===== */
+  .screen { display: none; min-height: 100dvh; flex-direction: column; position: relative; }
+  .screen.active { display: flex; }
+
+  /* ===== SPLASH ===== */
+  #screen-splash { background: var(--grad-hero); align-items: center; justify-content: center; }
+  .splash-logo { text-align: center; animation: fadeUp .8s ease both; }
+  .splash-icon { width: 88px; height: 88px; background: var(--grad-main); border-radius: 28px;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;
+    box-shadow: 0 8px 32px rgba(22,163,74,.5); font-size: 40px; }
+  .splash-title { font-family: 'Space Grotesk', sans-serif; font-size: 36px; font-weight: 700;
+    color: #fff; letter-spacing: -1px; }
+  .splash-sub { color: rgba(255,255,255,.65); margin-top: 8px; font-size: 15px; }
+  .splash-loader { margin-top: 48px; width: 180px; height: 3px; background: rgba(255,255,255,.2);
+    border-radius: 99px; overflow: hidden; }
+  .splash-loader-bar { height: 100%; width: 0; background: var(--grad-main);
+    border-radius: 99px; animation: load 2s ease forwards; }
+
+  /* ===== AUTH ===== */
+  #screen-auth { background: var(--n0); }
+  .auth-hero { background: var(--grad-hero); padding: 60px 28px 48px; text-align: center; position: relative; overflow: hidden; }
+  .auth-hero::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 70% 30%, rgba(22,163,74,.25) 0%, transparent 60%); }
+  .auth-hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700;
+    color:#fff; position:relative; z-index:1; }
+  .auth-hero p { color: rgba(255,255,255,.7); margin-top: 8px; font-size: 15px; position:relative; z-index:1; }
+  .auth-hero-img { width:120px; height:120px; border-radius:32px; background:var(--grad-main);
+    display:flex; align-items:center; justify-content:center; font-size:52px;
+    margin:0 auto 24px; box-shadow:0 12px 40px rgba(22,163,74,.4); position:relative; z-index:1; }
+  .auth-body { padding: 32px 24px; flex: 1; }
+  .auth-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px 20px;
+    border-radius: var(--radius); border: 1.5px solid var(--n200); background: var(--n0);
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; margin-bottom: 12px;
+    color: var(--n800); }
+  .auth-btn:hover { border-color: var(--g500); background: var(--g50); transform: translateY(-1px); }
+  .auth-btn-icon { width: 24px; height: 24px; border-radius: 6px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .auth-divider { text-align:center; color: var(--n400); font-size:13px; margin: 16px 0; position:relative; }
+  .auth-divider::before, .auth-divider::after { content:''; position:absolute; top:50%;
+    width: calc(50% - 24px); height:1px; background:var(--n200); }
+  .auth-divider::before { left:0; } .auth-divider::after { right:0; }
+  .input-group { margin-bottom: 16px; }
+  .input-group label { display:block; font-size:13px; font-weight:600; color:var(--n600); margin-bottom:6px; }
+  .input-group input { width:100%; padding:14px 16px; border-radius:var(--radius-sm);
+    border:1.5px solid var(--n200); font-size:15px; outline:none; transition:border .2s; background:var(--n50); }
+  .input-group input:focus { border-color: var(--g500); background: var(--n0); }
+  .btn-primary { width:100%; padding:16px; background:var(--grad-main); color:#fff;
+    border:none; border-radius:var(--radius); font-size:16px; font-weight:700;
+    cursor:pointer; transition:all .2s; margin-top:4px; }
+  .btn-primary:hover { opacity:.9; transform:translateY(-1px); box-shadow: var(--shadow); }
+  .auth-footer { text-align:center; margin-top:20px; font-size:13px; color:var(--n500); }
+  .auth-footer a { color:var(--g600); font-weight:600; cursor:pointer; }
+
+  /* ===== ONBOARDING ===== */
+  #screen-onboarding { background: var(--n0); }
+  .onb-header { padding: 56px 24px 32px; text-align:center; }
+  .onb-step { font-size:13px; font-weight:600; color:var(--g600); letter-spacing:.5px; margin-bottom:12px; }
+  .onb-header h2 { font-family:'Space Grotesk',sans-serif; font-size:28px; font-weight:700; color:var(--n900); }
+  .onb-header p { color:var(--n500); margin-top:8px; font-size:15px; line-height:1.5; }
+  .interests-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 24px 24px; }
+  .interest-card { border: 2px solid var(--n200); border-radius: var(--radius); padding: 20px 16px;
+    text-align:center; cursor:pointer; transition:all .2s; background:var(--n50); }
+  .interest-card.selected { border-color:var(--g500); background:var(--g50); }
+  .interest-card .ic-emoji { font-size: 32px; margin-bottom: 8px; }
+  .interest-card .ic-label { font-size:14px; font-weight:600; color:var(--n700); }
+  .interest-card.selected .ic-label { color:var(--g700); }
+  .onb-footer { padding: 16px 24px 40px; }
+  .onb-progress { display:flex; gap:6px; justify-content:center; margin-bottom:24px; }
+  .onb-dot { width:8px; height:8px; border-radius:99px; background:var(--n200); transition:all .3s; }
+  .onb-dot.active { width:24px; background:var(--g500); }
+
+  /* ===== TOP NAV ===== */
+  .top-nav { height:var(--nav-h); display:flex; align-items:center; justify-content:space-between;
+    padding:0 20px; background:var(--n0); border-bottom:1px solid var(--n100);
+    position:sticky; top:0; z-index:100; }
+  .top-nav-logo { font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:20px;
+    background:var(--grad-main); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .nav-actions { display:flex; gap:8px; }
+  .nav-icon-btn { width:40px; height:40px; border-radius:12px; border:none; background:var(--n100);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; transition:all .2s; }
+  .nav-icon-btn:hover { background:var(--g100); }
+  .xp-pill { display:flex; align-items:center; gap:6px; background:var(--g50); border:1.5px solid var(--g200);
+    border-radius:99px; padding:6px 12px; font-size:13px; font-weight:700; color:var(--g700); }
+
+  /* ===== BOTTOM TABS ===== */
+  .bottom-tabs { height:var(--tab-h); display:flex; background:var(--n0);
+    border-top:1px solid var(--n100); position:fixed; bottom:0; left:0; right:0; z-index:100;
+    padding-bottom: env(safe-area-inset-bottom); }
+  .tab-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; cursor:pointer; transition:all .2s; color:var(--n400); border:none; background:none; }
+  .tab-item.active { color:var(--g600); }
+  .tab-icon { font-size:22px; transition:transform .2s; }
+  .tab-item.active .tab-icon { transform:scale(1.1); }
+  .tab-label { font-size:11px; font-weight:600; }
+  .tab-badge { position:absolute; top:-2px; right:-4px; background:var(--danger);
+    color:#fff; font-size:10px; font-weight:700; border-radius:99px; padding:1px 5px; min-width:16px; text-align:center; }
+  .tab-icon-wrap { position:relative; }
+
+  /* ===== SCROLL AREA ===== */
+  .scroll-area { flex:1; overflow-y:auto; padding-bottom: calc(var(--tab-h) + 16px);
+    -webkit-overflow-scrolling: touch; }
+
+  /* ===== HOME ===== */
+  .home-hero { background:var(--grad-hero); padding:24px 20px 32px; position:relative; overflow:hidden; }
+  .home-hero::after { content:''; position:absolute; inset:0;
+    background: radial-gradient(circle at 80% -20%, rgba(22,163,74,.3) 0%, transparent 50%); pointer-events:none; }
+  .home-greet { color:rgba(255,255,255,.7); font-size:14px; margin-bottom:4px; }
+  .home-name { color:#fff; font-size:22px; font-weight:700; font-family:'Space Grotesk',sans-serif; }
+  .level-bar-wrap { margin-top:16px; background:rgba(255,255,255,.1); border-radius:var(--radius);
+    padding:16px; backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.15); position:relative; z-index:1; }
+  .level-info { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .level-badge { display:flex; align-items:center; gap:8px; }
+  .level-num { font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:#fff; }
+  .level-name { font-size:13px; color:rgba(255,255,255,.7); }
+  .xp-label { color:rgba(255,255,255,.8); font-size:13px; font-weight:600; }
+  .level-bar { height:8px; background:rgba(255,255,255,.2); border-radius:99px; overflow:hidden; }
+  .level-bar-fill { height:100%; background:var(--grad-main); border-radius:99px; transition:width 1s ease; }
+  .level-bar-fill.animated { animation: barFill 1.5s ease forwards; }
+  .home-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; }
+  .home-stat { background:rgba(255,255,255,.1); border-radius:12px; padding:12px;
+    text-align:center; border:1px solid rgba(255,255,255,.1); }
+  .home-stat-val { font-size:20px; font-weight:800; color:#fff; font-family:'Space Grotesk',sans-serif; }
+  .home-stat-lbl { font-size:11px; color:rgba(255,255,255,.6); margin-top:2px; }
+
+  /* SECTIONS */
+  .section { padding: 20px 20px 0; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .section-title { font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; color:var(--n900); }
+  .section-link { font-size:13px; font-weight:600; color:var(--g600); cursor:pointer; }
+
+  /* MISSIONS */
+  .mission-card { display:flex; align-items:center; gap:14px; background:var(--n0);
+    border-radius:var(--radius); padding:16px; margin-bottom:10px;
+    border:1.5px solid var(--n100); transition:all .2s; cursor:pointer; }
+  .mission-card:hover { border-color:var(--g300); box-shadow:var(--shadow); }
+  .mission-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center;
+    justify-content:center; font-size:22px; flex-shrink:0; }
+  .mission-icon.green { background:var(--g100); }
+  .mission-icon.blue { background:var(--b100); }
+  .mission-icon.yellow { background:#fef9c3; }
+  .mission-info { flex:1; }
+  .mission-name { font-size:14px; font-weight:600; color:var(--n800); margin-bottom:4px; }
+  .mission-progress-bar { height:5px; background:var(--n100); border-radius:99px; overflow:hidden; }
+  .mission-progress-fill { height:100%; background:var(--grad-main); border-radius:99px; }
+  .mission-meta { display:flex; align-items:center; justify-content:space-between; margin-top:5px; }
+  .mission-xp { font-size:12px; font-weight:700; color:var(--g600); }
+  .mission-count { font-size:12px; color:var(--n400); }
+  .mission-btn { padding:7px 14px; border:none; border-radius:8px; font-size:12px; font-weight:700;
+    cursor:pointer; transition:all .2s; }
+  .mission-btn.todo { background:var(--g100); color:var(--g700); }
+  .mission-btn.done { background:var(--n100); color:var(--n400); }
+
+  /* HORIZONTAL SCROLL */
+  .h-scroll { display:flex; gap:12px; overflow-x:auto; padding:0 20px 4px;
+    scrollbar-width:none; -ms-overflow-style:none; }
+  .h-scroll::-webkit-scrollbar { display:none; }
+
+  /* EVENT CARDS */
+  .event-card { flex-shrink:0; width:220px; border-radius:var(--radius); overflow:hidden;
+    background:var(--n0); box-shadow:var(--shadow); cursor:pointer; transition:all .2s; }
+  .event-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-lg); }
+  .event-card-img { height:130px; position:relative; overflow:hidden; }
+  .event-card-img .img-bg { width:100%; height:100%; object-fit:cover; display:flex;
+    align-items:center; justify-content:center; font-size:52px; }
+  .event-card-img::after { content:''; position:absolute; inset:0; background:var(--grad-card); }
+  .event-card-badge { position:absolute; top:10px; left:10px; z-index:1; background:rgba(0,0,0,.5);
+    backdrop-filter:blur(8px); color:#fff; font-size:11px; font-weight:700;
+    padding:4px 10px; border-radius:99px; }
+  .event-card-body { padding:12px; }
+  .event-card-title { font-size:14px; font-weight:700; color:var(--n900); margin-bottom:4px; line-height:1.3; }
+  .event-card-meta { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--n500); }
+  .event-card-xp { display:flex; align-items:center; gap:4px; margin-top:8px; }
+  .xp-tag { background:var(--g100); color:var(--g700); font-size:11px; font-weight:700;
+    padding:3px 8px; border-radius:99px; }
+
+  /* PRODUCER CARDS */
+  .producer-card { flex-shrink:0; width:160px; border-radius:var(--radius); overflow:hidden;
+    background:var(--n0); box-shadow:var(--shadow); cursor:pointer; transition:all .2s; }
+  .producer-card:hover { transform:translateY(-2px); }
+  .producer-card-img { height:110px; display:flex; align-items:center; justify-content:center; font-size:44px; }
+  .producer-card-body { padding:10px; }
+  .producer-card-name { font-size:13px; font-weight:700; color:var(--n900); margin-bottom:2px; }
+  .producer-card-type { font-size:11px; color:var(--n500); }
+  .producer-card-rating { display:flex; align-items:center; gap:3px; margin-top:6px; font-size:11px; font-weight:600; color:var(--warn); }
+
+  /* ===== MAP SCREEN ===== */
+  #screen-map { background:var(--n50); }
+  .map-wrap { flex:1; position:relative; overflow:hidden; background:#e8f0e9; min-height:400px; }
+  .map-bg { width:100%; height:100%; position:absolute; inset:0; }
+  .map-grid { position:absolute; inset:0; background-image:
+    linear-gradient(rgba(0,0,0,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.04) 1px, transparent 1px);
+    background-size:40px 40px; }
+  .map-roads { position:absolute; inset:0; }
+  .map-pin { position:absolute; cursor:pointer; transform:translate(-50%,-100%);
+    transition:transform .2s; z-index:10; }
+  .map-pin:hover { transform:translate(-50%,-100%) scale(1.15); }
+  .map-pin-dot { width:40px; height:40px; border-radius:50% 50% 50% 0; transform:rotate(-45deg);
+    display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,.2); }
+  .map-pin-dot span { transform:rotate(45deg); font-size:18px; }
+  .map-pin.green .map-pin-dot { background:var(--g500); }
+  .map-pin.blue .map-pin-dot { background:var(--b500); }
+  .map-pin.yellow .map-pin-dot { background:var(--warn); }
+  .map-pin.cyan .map-pin-dot { background:var(--accent); }
+  .map-pin-pulse { position:absolute; inset:-6px; border-radius:50%; border:2px solid currentColor;
+    opacity:.4; animation: pulse 2s infinite; }
+  .map-controls { position:absolute; right:16px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; gap:8px; }
+  .map-ctrl-btn { width:40px; height:40px; border-radius:12px; background:var(--n0);
+    border:none; box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:18px; transition:all .2s; }
+  .map-ctrl-btn:hover { background:var(--g50); }
+  .map-filter-bar { display:flex; gap:8px; padding:12px 16px; overflow-x:auto; scrollbar-width:none;
+    background:var(--n0); border-bottom:1px solid var(--n100); }
+  .map-filter-bar::-webkit-scrollbar { display:none; }
+  .filter-chip { flex-shrink:0; padding:7px 14px; border-radius:99px; font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .2s; border:1.5px solid var(--n200); background:var(--n0); color:var(--n600); }
+  .filter-chip.active { background:var(--g600); color:#fff; border-color:var(--g600); }
+  .map-popup { position:absolute; bottom:20px; left:16px; right:16px; background:var(--n0);
+    border-radius:var(--radius); box-shadow:var(--shadow-lg); padding:16px;
+    display:none; z-index:20; animation:slideUp .3s ease; }
+  .map-popup.visible { display:block; }
+  .map-popup-header { display:flex; align-items:center; gap:12px; }
+  .map-popup-icon { width:48px; height:48px; border-radius:14px; background:var(--g100);
+    display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .map-popup-title { font-size:16px; font-weight:700; color:var(--n900); }
+  .map-popup-sub { font-size:13px; color:var(--n500); margin-top:2px; }
+  .map-popup-actions { display:flex; gap:8px; margin-top:14px; }
+  .popup-btn { flex:1; padding:10px; border-radius:10px; font-size:13px; font-weight:700;
+    border:none; cursor:pointer; transition:all .2s; }
+  .popup-btn.primary { background:var(--grad-main); color:#fff; }
+  .popup-btn.secondary { background:var(--n100); color:var(--n700); }
+
+  /* ===== MISSIONS SCREEN ===== */
+  #screen-missions { background:var(--n50); }
+  .missions-hero { background:var(--grad-hero); padding:24px 20px 32px; }
+  .missions-hero h2 { font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:#fff; }
+  .missions-hero p { color:rgba(255,255,255,.7); font-size:14px; margin-top:6px; }
+  .streak-bar { display:flex; gap:8px; margin-top:16px; }
+  .streak-day { flex:1; height:6px; border-radius:99px; background:rgba(255,255,255,.2); }
+  .streak-day.done { background:var(--g400); }
+  .missions-tabs { display:flex; background:var(--n0); border-bottom:1px solid var(--n100); }
+  .missions-tab { flex:1; padding:14px; text-align:center; font-size:14px; font-weight:600;
+    cursor:pointer; transition:all .2s; color:var(--n500); border-bottom:2px solid transparent; }
+  .missions-tab.active { color:var(--g600); border-bottom-color:var(--g500); }
+  .challenge-card { background:var(--n0); border-radius:var(--radius); overflow:hidden;
+    margin-bottom:12px; border:1.5px solid var(--n100); cursor:pointer; transition:all .2s; }
+  .challenge-card:hover { border-color:var(--g300); box-shadow:var(--shadow); }
+  .challenge-header { display:flex; align-items:center; gap:14px; padding:16px; }
+  .challenge-icon { width:52px; height:52px; border-radius:16px; display:flex;
+    align-items:center; justify-content:center; font-size:26px; }
+  .challenge-info h4 { font-size:15px; font-weight:700; color:var(--n900); }
+  .challenge-info p { font-size:13px; color:var(--n500); margin-top:2px; }
+  .challenge-footer { display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:var(--n50); border-top:1px solid var(--n100); }
+  .challenge-reward { display:flex; align-items:center; gap:8px; }
+  .reward-xp { background:var(--g100); color:var(--g700); font-size:12px; font-weight:700;
+    padding:4px 10px; border-radius:99px; }
+  .reward-medal { background:var(--b100); color:var(--b700); font-size:12px; font-weight:700;
+    padding:4px 10px; border-radius:99px; }
+  .challenge-status { font-size:12px; font-weight:700; }
+  .challenge-status.todo { color:var(--g600); }
+  .challenge-status.inprogress { color:var(--warn); }
+  .challenge-status.done { color:var(--n400); }
+
+  /* ===== RANKING SCREEN ===== */
+  #screen-ranking { background:var(--n50); }
+  .ranking-hero { background:var(--grad-hero); padding:32px 20px 40px; text-align:center; }
+  .ranking-hero h2 { font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700; color:#fff; }
+  .ranking-hero p { color:rgba(255,255,255,.7); font-size:14px; margin-top:6px; }
+  .podium { display:flex; align-items:flex-end; justify-content:center; gap:8px; margin-top:20px; }
+  .podium-item { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .podium-avatar { width:52px; height:52px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:26px; border:3px solid rgba(255,255,255,.5); }
+  .podium-avatar.first { width:64px; height:64px; font-size:32px; border-color:#fbbf24; }
+  .podium-name { font-size:12px; font-weight:600; color:rgba(255,255,255,.8); }
+  .podium-base { border-radius:12px 12px 0 0; display:flex; align-items:center;
+    justify-content:center; font-size:18px; font-weight:800; color:rgba(255,255,255,.9); }
+  .podium-base.second { width:72px; height:60px; background:rgba(255,255,255,.15); }
+  .podium-base.first { width:80px; height:80px; background:rgba(251,191,36,.35); font-size:22px; }
+  .podium-base.third { width:72px; height:48px; background:rgba(255,255,255,.1); }
+  .rank-list { background:var(--n0); border-radius:var(--radius) var(--radius) 0 0;
+    margin-top:-16px; padding:20px 20px 0; flex:1; }
+  .rank-item { display:flex; align-items:center; gap:14px; padding:14px 0;
+    border-bottom:1px solid var(--n100); }
+  .rank-num { font-size:16px; font-weight:800; color:var(--n400); width:24px; text-align:center; flex-shrink:0; }
+  .rank-avatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:22px; flex-shrink:0; }
+  .rank-info { flex:1; }
+  .rank-name { font-size:15px; font-weight:600; color:var(--n900); }
+  .rank-sub { font-size:12px; color:var(--n500); margin-top:2px; }
+  .rank-xp { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:var(--g600); }
+  .rank-item.me { background:var(--g50); margin:0 -20px; padding:14px 20px;
+    border:none; border-radius:var(--radius); margin-bottom:1px; }
+
+  /* ===== PROFILE SCREEN ===== */
+  #screen-profile { background:var(--n50); }
+  .profile-hero { background:var(--grad-hero); padding:40px 20px 60px; text-align:center; position:relative; }
+  .profile-avatar { width:88px; height:88px; border-radius:50%; background:var(--grad-main);
+    display:flex; align-items:center; justify-content:center; font-size:42px;
+    margin:0 auto 12px; border:4px solid rgba(255,255,255,.3); }
+  .profile-name { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; color:#fff; }
+  .profile-level { color:rgba(255,255,255,.7); font-size:14px; margin-top:4px; }
+  .profile-stats-card { background:var(--n0); border-radius:var(--radius); margin:-30px 20px 0;
+    padding:20px; box-shadow:var(--shadow-lg); display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:16px; position:relative; z-index:1; }
+  .profile-stat { text-align:center; }
+  .profile-stat-val { font-size:22px; font-weight:800; color:var(--n900); font-family:'Space Grotesk',sans-serif; }
+  .profile-stat-lbl { font-size:11px; color:var(--n500); margin-top:2px; }
+  .medals-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .medal-item { aspect-ratio:1; border-radius:16px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:all .2s; }
+  .medal-item:hover { transform:scale(1.05); }
+  .medal-item.earned { background:var(--g100); border:2px solid var(--g300); }
+  .medal-item.locked { background:var(--n100); border:2px solid var(--n200); opacity:.5; }
+  .medal-emoji { font-size:28px; }
+  .medal-name { font-size:10px; font-weight:600; color:var(--n600); text-align:center; }
+  .history-item { display:flex; align-items:center; gap:14px; padding:14px;
+    background:var(--n0); border-radius:var(--radius-sm); margin-bottom:8px; }
+  .history-icon { width:44px; height:44px; border-radius:12px; background:var(--g100);
+    display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .history-info { flex:1; }
+  .history-name { font-size:14px; font-weight:600; color:var(--n800); }
+  .history-meta { font-size:12px; color:var(--n500); margin-top:2px; }
+  .history-xp { font-size:13px; font-weight:700; color:var(--g600); }
+
+  /* ===== EVENT DETAIL ===== */
+  #screen-event { background:var(--n0); }
+  .event-detail-img { height:280px; position:relative; display:flex; align-items:center;
+    justify-content:center; font-size:80px; overflow:hidden; }
+  .event-detail-img::after { content:''; position:absolute; inset:0; background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.7) 100%); }
+  .event-detail-header { padding:20px; }
+  .event-detail-category { display:inline-flex; align-items:center; gap:6px;
+    background:var(--g100); color:var(--g700); font-size:12px; font-weight:700;
+    padding:5px 12px; border-radius:99px; margin-bottom:12px; }
+  .event-detail-title { font-family:'Space Grotesk',sans-serif; font-size:26px; font-weight:700;
+    color:var(--n900); line-height:1.2; margin-bottom:12px; }
+  .event-meta-row { display:flex; align-items:center; gap:8px; color:var(--n600);
+    font-size:14px; margin-bottom:8px; }
+  .event-desc { font-size:15px; line-height:1.6; color:var(--n600); margin-top:16px; }
+  .event-actions { padding:16px 20px; border-top:1px solid var(--n100); }
+  .ar-btn { width:100%; padding:18px; background:linear-gradient(135deg,#7c3aed,#2563eb);
+    color:#fff; border:none; border-radius:var(--radius); font-size:16px; font-weight:700;
+    cursor:pointer; transition:all .2s; display:flex; align-items:center; justify-content:center;
+    gap:10px; margin-bottom:10px; box-shadow: 0 4px 20px rgba(124,58,237,.4); }
+  .ar-btn:hover { opacity:.9; transform:translateY(-1px); box-shadow: 0 8px 28px rgba(124,58,237,.5); }
+  .ar-badge { background:rgba(255,255,255,.2); padding:3px 8px; border-radius:6px; font-size:11px; }
+  .event-secondary-actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .sec-btn { padding:13px 8px; border-radius:var(--radius-sm); border:1.5px solid var(--n200);
+    background:var(--n0); font-size:13px; font-weight:600; color:var(--n700);
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; }
+  .sec-btn:hover { border-color:var(--g400); color:var(--g700); background:var(--g50); }
+  .checkin-btn { width:100%; padding:16px; background:var(--grad-main); color:#fff;
+    border:none; border-radius:var(--radius); font-size:16px; font-weight:700;
+    cursor:pointer; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px; transition:all .2s; }
+  .participants { display:flex; align-items:center; margin-top:16px; }
+  .participant-avatar { width:32px; height:32px; border-radius:50%; border:2px solid var(--n0);
+    display:flex; align-items:center; justify-content:center; font-size:16px; margin-left:-8px; background:var(--n100); }
+  .participant-avatar:first-child { margin-left:0; }
+  .participant-count { margin-left:8px; font-size:13px; color:var(--n500); }
+
+  /* ===== AR SCREEN ===== */
+  #screen-ar { background:#000; }
+  .ar-viewport { flex:1; position:relative; overflow:hidden; }
+  .ar-scene { width:100%; height:100%; position:absolute; inset:0;
+    background: radial-gradient(ellipse at center, #0d2137 0%, #000 100%);
+    display:flex; align-items:center; justify-content:center; }
+  .ar-env { width:100%; height:100%; position:relative; overflow:hidden; }
+  .ar-floor { position:absolute; bottom:0; left:0; right:0; height:50%;
+    background: linear-gradient(180deg, transparent 0%, rgba(22,163,74,.1) 100%);
+    transform-origin:bottom; }
+  .ar-walls { position:absolute; inset:0; }
+  .ar-wall-left { position:absolute; left:0; top:0; bottom:0; width:30%;
+    background: linear-gradient(90deg, rgba(0,100,200,.15) 0%, transparent 100%); }
+  .ar-wall-right { position:absolute; right:0; top:0; bottom:0; width:30%;
+    background: linear-gradient(270deg, rgba(0,100,200,.15) 0%, transparent 100%); }
+  .ar-ceiling { position:absolute; top:0; left:0; right:0; height:35%;
+    background: linear-gradient(180deg, rgba(22,163,74,.08) 0%, transparent 100%); }
+  .ar-grid-floor { position:absolute; bottom:0; left:0; right:0; height:50%;
+    background-image: linear-gradient(rgba(22,163,74,.2) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(22,163,74,.2) 1px, transparent 1px);
+    background-size: 40px 40px;
+    transform: perspective(400px) rotateX(60deg); transform-origin: bottom; }
+  .ar-content { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .ar-space { font-size:100px; animation: float 3s ease-in-out infinite; filter:drop-shadow(0 0 30px rgba(22,163,74,.4)); }
+  .ar-hotspot { position:absolute; cursor:pointer; animation: hotspotPulse 2s infinite; }
+  .ar-hotspot-dot { width:36px; height:36px; border-radius:50%; background:rgba(22,163,74,.9);
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    box-shadow:0 0 20px rgba(22,163,74,.6); border:2px solid rgba(255,255,255,.5); }
+  .ar-hotspot-ring { position:absolute; inset:-8px; border-radius:50%;
+    border:2px solid rgba(22,163,74,.5); animation:hotspotRing 2s infinite; }
+  .ar-hotspot-label { position:absolute; left:50%; transform:translateX(-50%);
+    bottom:calc(100% + 10px); background:rgba(0,0,0,.8); backdrop-filter:blur(10px);
+    color:#fff; font-size:12px; font-weight:600; padding:6px 12px; border-radius:8px;
+    white-space:nowrap; border:1px solid rgba(255,255,255,.1); }
+  .ar-hud { position:absolute; top:0; left:0; right:0; padding:20px;
+    display:flex; align-items:flex-start; justify-content:space-between; z-index:10; }
+  .ar-hud-left { display:flex; flex-direction:column; gap:8px; }
+  .ar-badge-pill { background:rgba(0,0,0,.6); backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.15); border-radius:99px; padding:8px 14px;
+    display:flex; align-items:center; gap:8px; }
+  .ar-badge-pill span { color:#fff; font-size:13px; font-weight:600; }
+  .ar-close { width:40px; height:40px; border-radius:50%; background:rgba(0,0,0,.6);
+    backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.2);
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+    cursor:pointer; color:#fff; }
+  .ar-bottom { position:absolute; bottom:0; left:0; right:0; padding:20px;
+    background:linear-gradient(transparent,rgba(0,0,0,.8)); z-index:10; }
+  .ar-bottom-title { color:#fff; font-size:18px; font-weight:700; font-family:'Space Grotesk',sans-serif; }
+  .ar-bottom-sub { color:rgba(255,255,255,.7); font-size:13px; margin-top:4px; }
+  .ar-actions { display:flex; gap:10px; margin-top:14px; }
+  .ar-action-btn { flex:1; padding:13px; border-radius:12px; font-size:13px; font-weight:700;
+    border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .ar-action-btn.primary { background:var(--g500); color:#fff; }
+  .ar-action-btn.secondary { background:rgba(255,255,255,.15); color:#fff; }
+  .ar-xp-popup { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:rgba(22,163,74,.95); color:#fff; padding:16px 28px; border-radius:16px;
+    text-align:center; display:none; z-index:20; backdrop-filter:blur(10px); }
+  .ar-xp-popup.show { display:block; animation: xpPop .5s ease; }
+  .ar-xp-big { font-size:32px; font-weight:900; font-family:'Space Grotesk',sans-serif; }
+  .ar-xp-label { font-size:14px; opacity:.9; }
+
+  /* ===== MODALS ===== */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6);
+    backdrop-filter:blur(4px); z-index:200; display:none; align-items:flex-end;
+    justify-content:center; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:var(--n0); border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+    width:100%; max-width:500px; max-height:85vh; overflow-y:auto;
+    animation:slideUp .3s ease; padding-bottom: env(safe-area-inset-bottom); }
+  .modal-handle { width:40px; height:4px; border-radius:99px; background:var(--n200);
+    margin:12px auto 0; }
+  .modal-header { padding:20px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+  .modal-title { font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; color:var(--n900); }
+  .modal-close { width:32px; height:32px; border-radius:50%; background:var(--n100);
+    border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
+  .modal-body { padding:20px; }
+
+  /* CHECKIN MODAL */
+  .checkin-success { text-align:center; padding:20px 0; }
+  .checkin-animation { font-size:64px; animation: bounce 1s ease; }
+  .checkin-title { font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:700;
+    color:var(--n900); margin-top:16px; }
+  .checkin-sub { color:var(--n500); margin-top:8px; font-size:15px; }
+  .xp-gained { display:flex; align-items:center; justify-content:center; gap:8px;
+    margin-top:20px; background:var(--g50); border:2px solid var(--g200);
+    border-radius:var(--radius); padding:16px; }
+  .xp-gained-val { font-size:28px; font-weight:900; color:var(--g600); font-family:'Space Grotesk',sans-serif; }
+  .xp-gained-lbl { font-size:14px; color:var(--g700); font-weight:600; }
+  .badge-earned { margin-top:16px; background:linear-gradient(135deg,#7c3aed,#2563eb);
+    border-radius:var(--radius); padding:16px; color:#fff; text-align:center; }
+  .badge-earned-emoji { font-size:36px; margin-bottom:8px; }
+  .badge-earned-title { font-size:16px; font-weight:700; }
+  .badge-earned-sub { font-size:13px; opacity:.8; margin-top:4px; }
+
+  /* REWARD MODAL */
+  .rewards-list { display:flex; flex-direction:column; gap:12px; }
+  .reward-card { display:flex; align-items:center; gap:14px; padding:16px;
+    background:var(--n50); border-radius:var(--radius-sm); border:1.5px solid var(--n100);
+    cursor:pointer; transition:all .2s; }
+  .reward-card:hover { border-color:var(--g300); }
+  .reward-card-icon { width:52px; height:52px; border-radius:14px; background:var(--g100);
+    display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; }
+  .reward-card-info { flex:1; }
+  .reward-card-title { font-size:15px; font-weight:700; color:var(--n900); }
+  .reward-card-sub { font-size:13px; color:var(--n500); margin-top:2px; }
+  .reward-card-cost { display:flex; align-items:center; gap:4px; background:var(--g100);
+    color:var(--g700); font-size:12px; font-weight:700; padding:4px 10px; border-radius:99px; }
+  .reward-locked { opacity:.5; }
+
+  /* TOAST */
+  .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px);
+    background:var(--n900); color:#fff; padding:12px 20px; border-radius:99px;
+    font-size:14px; font-weight:600; z-index:300; transition:transform .3s ease;
+    display:flex; align-items:center; gap:8px; max-width:calc(100vw - 40px); }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  /* BACK BTN */
+  .back-btn { width:40px; height:40px; border-radius:50%; background:rgba(0,0,0,.4);
+    backdrop-filter:blur(8px); border:none; display:flex; align-items:center;
+    justify-content:center; cursor:pointer; font-size:20px; color:#fff; position:absolute;
+    top:20px; left:20px; z-index:10; transition:all .2s; }
+  .back-btn:hover { background:rgba(0,0,0,.6); }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes load { from { width:0; } to { width:100%; } }
+  @keyframes slideUp { from { transform:translateY(40px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+  @keyframes pulse { 0%,100% { transform:scale(1); opacity:.4; } 50% { transform:scale(1.4); opacity:0; } }
+  @keyframes hotspotPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.05); } }
+  @keyframes hotspotRing { 0% { transform:scale(1); opacity:.7; } 100% { transform:scale(2); opacity:0; } }
+  @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-15px); } }
+  @keyframes xpPop { 0% { transform:translate(-50%,-50%) scale(.5); opacity:0; }
+    60% { transform:translate(-50%,-50%) scale(1.1); } 100% { transform:translate(-50%,-50%) scale(1); opacity:1; } }
+  @keyframes bounce { 0%,100% { transform:translateY(0); } 40% { transform:translateY(-20px); } 70% { transform:translateY(-8px); } }
+  @keyframes barFill { from { width:0; } }
+  @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+  @keyframes levelUp { 0% { transform:scale(0) rotate(-180deg); opacity:0; }
+    60% { transform:scale(1.2) rotate(10deg); } 100% { transform:scale(1) rotate(0); opacity:1; } }
+
+  /* ===== TAGS ===== */
+  .tag { display:inline-flex; align-items:center; gap:4px; padding:4px 10px;
+    border-radius:99px; font-size:12px; font-weight:600; }
+  .tag-green { background:var(--g100); color:var(--g700); }
+  .tag-blue { background:var(--b100); color:var(--b700); }
+  .tag-yellow { background:#fef9c3; color:#92400e; }
+  .tag-purple { background:#ede9fe; color:#6d28d9; }
+
+  /* ===== DIVIDER ===== */
+  .divider { height:1px; background:var(--n100); margin:8px 0; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (min-width: 640px) {
+    .interests-grid { grid-template-columns:1fr 1fr 1fr 1fr; }
+    .h-scroll { padding:0 24px 4px; }
+    .event-card { width:260px; }
+    .producer-card { width:180px; }
+    .medals-grid { grid-template-columns:repeat(6,1fr); }
+    .bottom-tabs { max-width:500px; left:50%; right:auto; transform:translateX(-50%); border-radius:var(--radius) var(--radius) 0 0; border:1px solid var(--n200); border-bottom:none; }
+    .toast { max-width:360px; }
+  }
+  @media (min-width: 1024px) {
+    .screen { max-width: 420px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,.15); min-height: 100dvh; }
+    body { background: #0f172a; display:flex; justify-content:center; }
+    .bottom-tabs { max-width: 420px; left:50%; right:auto; transform:translateX(-50%); border-radius:0; border:none; border-top:1px solid var(--n200); }
+    .modal-overlay { justify-content:center; align-items:center; }
+    .modal { border-radius:var(--radius-xl); max-height:80vh; }
+    #screen-ar { max-width:420px; margin:0 auto; }
+  }
+
+  .empty-state { text-align:center; padding:48px 24px; color:var(--n400); }
+  .empty-state .es-icon { font-size:48px; margin-bottom:12px; }
+  .empty-state p { font-size:15px; }
+
+  /* Notification dot */
+  .notif-dot { width:8px; height:8px; border-radius:50%; background:var(--danger);
+    position:absolute; top:6px; right:6px; }
+
+  /* Shimmer loading */
+  .shimmer { background:linear-gradient(90deg,var(--n100) 25%,var(--n200) 50%,var(--n100) 75%);
+    background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:8px; }
+
+  .reviews-list { margin-top:8px; }
+  .review-item { padding:14px; background:var(--n50); border-radius:var(--radius-sm); margin-bottom:8px; }
+  .review-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .review-avatar { width:36px; height:36px; border-radius:50%; background:var(--g100); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .review-name { font-size:14px; font-weight:600; color:var(--n800); }
+  .review-stars { font-size:12px; color:var(--warn); margin-top:2px; }
+  .review-text { font-size:13px; color:var(--n600); line-height:1.5; }
+</style>
+</head>
+<body>
+
+<!-- =================== SPLASH =================== -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-logo">
+    <div class="splash-icon">🗺️</div>
+    <div class="splash-title display">LocalQuest</div>
+    <div class="splash-sub">Descubra sua cidade. Conecte-se com sua comunidade.</div>
+    <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+  </div>
+</div>
+
+<!-- =================== AUTH =================== -->
+<div class="screen" id="screen-auth">
+  <div class="auth-hero">
+    <div class="auth-hero-img">🗺️</div>
+    <h1>Bem-vindo ao LocalQuest</h1>
+    <p>Transforme sua cidade em uma aventura</p>
+  </div>
+  <div class="auth-body">
+    <button class="auth-btn" onclick="handleGoogleLogin()">
+      <div class="auth-btn-icon">🔵</div>
+      <span>Continuar com Google</span>
+    </button>
+    <button class="auth-btn" onclick="handleAppleLogin()">
+      <div class="auth-btn-icon">⚫</div>
+      <span>Continuar com Apple</span>
+    </button>
+    <div class="auth-divider">ou</div>
+    <div class="input-group">
+      <label>E-mail</label>
+      <input type="email" placeholder="seu@email.com" id="auth-email">
+    </div>
+    <div class="input-group">
+      <label>Senha</label>
+      <input type="password" placeholder="••••••••" id="auth-password">
+    </div>
+    <button class="btn-primary" onclick="handleEmailLogin()">Entrar</button>
+    <div class="auth-footer">
+      Não tem conta? <a onclick="handleEmailLogin()">Criar gratuitamente</a>
+    </div>
+  </div>
+</div>
+
+<!-- =================== ONBOARDING =================== -->
+<div class="screen" id="screen-onboarding">
+  <div class="onb-header">
+    <div class="onb-step">PASSO 1 DE 1</div>
+    <h2>O que você curte explorar?</h2>
+    <p>Selecione seus interesses para receber recomendações personalizadas</p>
+  </div>
+  <div class="interests-grid">
+    <div class="interest-card" onclick="toggleInterest(this)"><div class="ic-emoji">🎵</div><div class="ic-label">Música</div></div>
+    <div class="interest-card selected" onclick="toggleInterest(this)"><div class="ic-emoji">🎨</div><div class="ic-label">Arte</div></div>
+    <div class="interest-card selected" onclick="toggleInterest(this)"><div class="ic-emoji">🍕</div><div class="ic-label">Gastronomia</div></div>
+    <div class="interest-card" onclick="toggleInterest(this)"><div class="ic-emoji">⚽</div><div class="ic-label">Esportes</div></div>
+    <div class="interest-card selected" onclick="toggleInterest(this)"><div class="ic-emoji">🌱</div><div class="ic-label">Sustentabilidade</div></div>
+    <div class="interest-card" onclick="toggleInterest(this)"><div class="ic-emoji">💻</div><div class="ic-label">Tecnologia</div></div>
+    <div class="interest-card selected" onclick="toggleInterest(this)"><div class="ic-emoji">🏛️</div><div class="ic-label">Cultura</div></div>
+    <div class="interest-card" onclick="toggleInterest(this)"><div class="ic-emoji">💼</div><div class="ic-label">Empreendedorismo</div></div>
+  </div>
+  <div class="onb-footer">
+    <div class="onb-progress">
+      <div class="onb-dot active"></div>
+      <div class="onb-dot"></div>
+      <div class="onb-dot"></div>
+    </div>
+    <button class="btn-primary" onclick="finishOnboarding()">Começar a explorar →</button>
+  </div>
+</div>
+
+<!-- =================== HOME =================== -->
+<div class="screen" id="screen-home">
+  <div class="top-nav">
+    <div class="top-nav-logo display">LocalQuest</div>
+    <div class="nav-actions">
+      <div class="xp-pill">⚡ <span id="home-xp-display">2.340</span> XP</div>
+      <button class="nav-icon-btn" onclick="showToast('🔔 3 novas notificações!')">
+        🔔<div class="notif-dot"></div>
+      </button>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <!-- HERO -->
+    <div class="home-hero">
+      <div class="home-greet">Boa tarde,</div>
+      <div class="home-name display">Rafael Mendes 👋</div>
+      <div class="level-bar-wrap">
+        <div class="level-info">
+          <div class="level-badge">
+            <div style="font-size:28px">🌿</div>
+            <div>
+              <div class="level-num display">Nv. 8</div>
+              <div class="level-name">Explorador Urbano</div>
+            </div>
+          </div>
+          <div class="xp-label">2.340 / 3.000 XP</div>
+        </div>
+        <div class="level-bar"><div class="level-bar-fill animated" style="width:78%"></div></div>
+        <div class="home-stats">
+          <div class="home-stat"><div class="home-stat-val">47</div><div class="home-stat-lbl">Eventos</div></div>
+          <div class="home-stat"><div class="home-stat-val">12</div><div class="home-stat-lbl">Medalhas</div></div>
+          <div class="home-stat"><div class="home-stat-val">5🔥</div><div class="home-stat-lbl">Streak</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MISSIONS -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">⚡ Missões do Dia</div>
+        <div class="section-link" onclick="goTo('missions')">Ver todas</div>
+      </div>
+      <div class="mission-card" onclick="startMission(this,'Visitar Feira')">
+        <div class="mission-icon green">🛒</div>
+        <div class="mission-info">
+          <div class="mission-name">Visitar uma feira local</div>
+          <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:0%"></div></div>
+          <div class="mission-meta">
+            <div class="mission-xp">+150 XP</div>
+            <div class="mission-count">0/1</div>
+          </div>
+        </div>
+        <button class="mission-btn todo">Ir</button>
+      </div>
+      <div class="mission-card" onclick="startMission(this,'Explorar A.R.')">
+        <div class="mission-icon blue">🔮</div>
+        <div class="mission-info">
+          <div class="mission-name">Explorar local com A.R.</div>
+          <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:0%"></div></div>
+          <div class="mission-meta">
+            <div class="mission-xp">+200 XP</div>
+            <div class="mission-count">0/1</div>
+          </div>
+        </div>
+        <button class="mission-btn todo">Ir</button>
+      </div>
+      <div class="mission-card" onclick="showCheckin()">
+        <div class="mission-icon yellow">📍</div>
+        <div class="mission-info">
+          <div class="mission-name">Fazer check-in em evento</div>
+          <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:100%"></div></div>
+          <div class="mission-meta">
+            <div class="mission-xp">+100 XP</div>
+            <div class="mission-count">1/1 ✅</div>
+          </div>
+        </div>
+        <button class="mission-btn done">Feito</button>
+      </div>
+    </div>
+
+    <!-- EVENTS -->
+    <div style="margin-top:24px">
+      <div class="section-header" style="padding:0 20px">
+        <div class="section-title">🎪 Próximos Eventos</div>
+        <div class="section-link" onclick="goTo('map')">Ver mapa</div>
+      </div>
+      <div class="h-scroll" style="margin-top:14px">
+        <div class="event-card" onclick="openEvent('feira')">
+          <div class="event-card-img" style="background:linear-gradient(135deg,#16a34a,#15803d)">
+            <div class="event-card-badge">Hoje</div>
+            <span style="position:relative;z-index:1">🌿</span>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-title">Feira Orgânica Vila Madalena</div>
+            <div class="event-card-meta">📍 1.2km • 09h às 14h</div>
+            <div class="event-card-xp"><span class="xp-tag">+120 XP</span><span class="tag tag-green">Sustentabilidade</span></div>
+          </div>
+        </div>
+        <div class="event-card" onclick="openEvent('jazz')">
+          <div class="event-card-img" style="background:linear-gradient(135deg,#7c3aed,#2563eb)">
+            <div class="event-card-badge">Amanhã</div>
+            <span style="position:relative;z-index:1">🎷</span>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-title">Noite de Jazz no Coreto</div>
+            <div class="event-card-meta">📍 2.8km • 20h às 23h</div>
+            <div class="event-card-xp"><span class="xp-tag">+180 XP</span><span class="tag tag-purple">Música</span></div>
+          </div>
+        </div>
+        <div class="event-card" onclick="openEvent('arte')">
+          <div class="event-card-img" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
+            <div class="event-card-badge">Sáb</div>
+            <span style="position:relative;z-index:1">🖼️</span>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-title">Exposição Arte Urbana</div>
+            <div class="event-card-meta">📍 0.9km • 10h às 18h</div>
+            <div class="event-card-xp"><span class="xp-tag">+150 XP</span><span class="tag tag-yellow">Arte</span></div>
+          </div>
+        </div>
+        <div class="event-card" onclick="openEvent('gastro')">
+          <div class="event-card-img" style="background:linear-gradient(135deg,#dc2626,#9a3412)">
+            <div class="event-card-badge">Dom</div>
+            <span style="position:relative;z-index:1">🍜</span>
+          </div>
+          <div class="event-card-body">
+            <div class="event-card-title">Festival Gastronômico SP</div>
+            <div class="event-card-meta">📍 4.1km • 11h às 20h</div>
+            <div class="event-card-xp"><span class="xp-tag">+200 XP</span><span class="tag tag-yellow">Gastronomia</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCERS -->
+    <div style="margin-top:24px">
+      <div class="section-header" style="padding:0 20px">
+        <div class="section-title">🌱 Produtores Locais</div>
+        <div class="section-link">Ver mais</div>
+      </div>
+      <div class="h-scroll" style="margin-top:14px">
+        <div class="producer-card" onclick="openEvent('cafe')">
+          <div class="producer-card-img" style="background:var(--g100)">☕</div>
+          <div class="producer-card-body">
+            <div class="producer-card-name">Café das Origens</div>
+            <div class="producer-card-type">Café • Orgânico</div>
+            <div class="producer-card-rating">⭐ 4.9 <span style="color:var(--n400)">(128)</span></div>
+          </div>
+        </div>
+        <div class="producer-card" onclick="openEvent('mel')">
+          <div class="producer-card-img" style="background:#fef9c3">🍯</div>
+          <div class="producer-card-body">
+            <div class="producer-card-name">Mel da Serra</div>
+            <div class="producer-card-type">Apicultura • Local</div>
+            <div class="producer-card-rating">⭐ 4.8 <span style="color:var(--n400)">(87)</span></div>
+          </div>
+        </div>
+        <div class="producer-card" onclick="openEvent('horta')">
+          <div class="producer-card-img" style="background:var(--g100)">🥬</div>
+          <div class="producer-card-body">
+            <div class="producer-card-name">Horta Comunitária</div>
+            <div class="producer-card-type">Agroecologia</div>
+            <div class="producer-card-rating">⭐ 5.0 <span style="color:var(--n400)">(56)</span></div>
+          </div>
+        </div>
+        <div class="producer-card" onclick="showToast('🎨 Artesanato da Vó!')">
+          <div class="producer-card-img" style="background:var(--b100)">🧵</div>
+          <div class="producer-card-body">
+            <div class="producer-card-name">Artesanato da Vó</div>
+            <div class="producer-card-type">Artesanato • Têxtil</div>
+            <div class="producer-card-rating">⭐ 4.7 <span style="color:var(--n400)">(203)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT ACTIVITY -->
+    <div class="section" style="margin-top:24px;margin-bottom:24px">
+      <div class="section-header">
+        <div class="section-title">🕐 Atividade Recente</div>
+      </div>
+      <div class="history-item">
+        <div class="history-icon">🛒</div>
+        <div class="history-info">
+          <div class="history-name">Feira Orgânica Liberdade</div>
+          <div class="history-meta">Check-in realizado • 2h atrás</div>
+        </div>
+        <div class="history-xp">+100 XP</div>
+      </div>
+      <div class="history-item">
+        <div class="history-icon">🔮</div>
+        <div class="history-info">
+          <div class="history-name">Tour A.R. – Mercado Municipal</div>
+          <div class="history-meta">Missão completa • Ontem</div>
+        </div>
+        <div class="history-xp">+200 XP</div>
+      </div>
+      <div class="history-item">
+        <div class="history-icon">🎷</div>
+        <div class="history-info">
+          <div class="history-name">Jazz no Parque Trianon</div>
+          <div class="history-meta">Participou • 3 dias atrás</div>
+        </div>
+        <div class="history-xp">+180 XP</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-tabs" id="tabs-home">
+    <button class="tab-item active" onclick="goTo('home')"><div class="tab-icon-wrap"><span class="tab-icon">🏠</span></div><span class="tab-label">Home</span></button>
+    <button class="tab-item" onclick="goTo('map')"><div class="tab-icon-wrap"><span class="tab-icon">🗺️</span></div><span class="tab-label">Mapa</span></button>
+    <button class="tab-item" onclick="goTo('missions')"><div class="tab-icon-wrap"><span class="tab-icon">⚡</span><span class="tab-badge">3</span></div><span class="tab-label">Missões</span></button>
+    <button class="tab-item" onclick="goTo('ranking')"><div class="tab-icon-wrap"><span class="tab-icon">🏆</span></div><span class="tab-label">Ranking</span></button>
+    <button class="tab-item" onclick="goTo('profile')"><div class="tab-icon-wrap"><span class="tab-icon">👤</span></div><span class="tab-label">Perfil</span></button>
+  </div>
+</div>
+
+<!-- =================== MAP =================== -->
+<div class="screen" id="screen-map">
+  <div class="top-nav">
+    <div class="top-nav-logo display">Explorar</div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" onclick="showToast('🔍 Busca em breve!')">🔍</button>
+      <button class="nav-icon-btn" onclick="showToast('🎯 Filtros aplicados!')">⚙️</button>
+    </div>
+  </div>
+  <div class="map-filter-bar">
+    <div class="filter-chip active" onclick="filterMap(this,'Todos')">Todos</div>
+    <div class="filter-chip" onclick="filterMap(this,'Eventos')">🎪 Eventos</div>
+    <div class="filter-chip" onclick="filterMap(this,'Feiras')">🛒 Feiras</div>
+    <div class="filter-chip" onclick="filterMap(this,'Cafés')">☕ Cafés</div>
+    <div class="filter-chip" onclick="filterMap(this,'Cultura')">🎨 Cultura</div>
+    <div class="filter-chip" onclick="filterMap(this,'Verde')">🌱 Sustentável</div>
+  </div>
+  <div class="map-wrap" id="map-area">
+    <!-- SVG Map Background -->
+    <svg class="map-bg" viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background -->
+      <rect width="400" height="500" fill="#e8f0e9"/>
+      <!-- Parks -->
+      <rect x="40" y="60" width="120" height="80" rx="8" fill="#c8e6c9"/>
+      <rect x="240" y="200" width="100" height="70" rx="8" fill="#c8e6c9"/>
+      <rect x="30" y="320" width="80" height="60" rx="8" fill="#c8e6c9"/>
+      <!-- Roads (horizontal) -->
+      <rect x="0" y="160" width="400" height="16" fill="#f5f5f5"/>
+      <rect x="0" y="280" width="400" height="16" fill="#f5f5f5"/>
+      <rect x="0" y="400" width="400" height="16" fill="#f5f5f5"/>
+      <!-- Roads (vertical) -->
+      <rect x="150" y="0" width="16" height="500" fill="#f5f5f5"/>
+      <rect x="300" y="0" width="16" height="500" fill="#f5f5f5"/>
+      <!-- Buildings -->
+      <rect x="40" y="180" width="50" height="80" rx="4" fill="#dde8e0"/>
+      <rect x="100" y="190" width="40" height="70" rx="4" fill="#dde8e0"/>
+      <rect x="170" y="180" width="120" height="90" rx="4" fill="#d4e2d6"/>
+      <rect x="170" y="300" width="120" height="90" rx="4" fill="#d4e2d6"/>
+      <rect x="320" y="180" width="70" height="90" rx="4" fill="#dde8e0"/>
+      <rect x="40" y="300" width="100" height="90" rx="4" fill="#dde8e0"/>
+      <rect x="320" y="300" width="70" height="90" rx="4" fill="#dde8e0"/>
+      <rect x="40" y="420" width="100" height="70" rx="4" fill="#dde8e0"/>
+      <rect x="170" y="420" width="120" height="70" rx="4" fill="#d4e2d6"/>
+      <rect x="320" y="420" width="70" height="70" rx="4" fill="#dde8e0"/>
+      <!-- Park trees -->
+      <circle cx="80" cy="95" r="10" fill="#a5d6a7"/><circle cx="110" cy="110" r="8" fill="#81c784"/>
+      <circle cx="140" cy="90" r="9" fill="#a5d6a7"/><circle cx="60" cy="115" r="7" fill="#81c784"/>
+      <circle cx="270" cy="225" r="9" fill="#a5d6a7"/><circle cx="305" cy="240" r="8" fill="#81c784"/>
+      <circle cx="330" cy="220" r="7" fill="#a5d6a7"/>
+      <!-- Road lines -->
+      <line x1="0" y1="168" x2="400" y2="168" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="20,10"/>
+      <line x1="0" y1="288" x2="400" y2="288" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="20,10"/>
+      <line x1="158" y1="0" x2="158" y2="500" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="20,10"/>
+      <line x1="308" y1="0" x2="308" y2="500" stroke="#e0e0e0" stroke-width="1" stroke-dasharray="20,10"/>
+    </svg>
+    <div class="map-grid"></div>
+
+    <!-- Map Pins -->
+    <div class="map-pin green" style="left:22%;top:42%" onclick="showMapPopup('feira','🛒','Feira Orgânica Vila Madalena','Hoje • 09h–14h • Sustentabilidade')">
+      <div class="map-pin-dot"><span>🛒</span></div>
+      <div class="map-pin-pulse" style="color:var(--g500)"></div>
+    </div>
+    <div class="map-pin blue" style="left:60%;top:28%" onclick="showMapPopup('jazz','🎷','Noite de Jazz no Coreto','Amanhã • 20h–23h • Música')">
+      <div class="map-pin-dot"><span>🎷</span></div>
+    </div>
+    <div class="map-pin yellow" style="left:75%;top:65%" onclick="showMapPopup('arte','🎨','Exposição Arte Urbana','Sábado • 10h–18h • Arte')">
+      <div class="map-pin-dot" style="background:var(--warn)"><span>🎨</span></div>
+    </div>
+    <div class="map-pin green" style="left:38%;top:58%" onclick="showMapPopup('cafe','☕','Café das Origens','Aberto agora • ⭐ 4.9')">
+      <div class="map-pin-dot"><span>☕</span></div>
+    </div>
+    <div class="map-pin cyan" style="left:18%;top:74%" onclick="showMapPopup('horta','🌱','Horta Comunitária','Todos os dias • Sustentável')">
+      <div class="map-pin-dot" style="background:var(--accent)"><span>🌱</span></div>
+      <div class="map-pin-pulse" style="color:var(--accent)"></div>
+    </div>
+    <div class="map-pin blue" style="left:55%;top:80%" onclick="showMapPopup('gastro','🍜','Festival Gastronômico SP','Dom • 11h–20h • Gastronomia')">
+      <div class="map-pin-dot"><span>🍜</span></div>
+    </div>
+    <div class="map-pin yellow" style="left:82%;top:42%" onclick="showMapPopup('mercado','🏛️','Mercado Municipal','Aberto • Dom cultural')">
+      <div class="map-pin-dot" style="background:var(--warn)"><span>🏛️</span></div>
+    </div>
+
+    <!-- User Location -->
+    <div style="position:absolute;left:42%;top:50%;transform:translate(-50%,-50%);z-index:15">
+      <div style="width:20px;height:20px;border-radius:50%;background:#3b82f6;border:3px solid #fff;box-shadow:0 2px 8px rgba(59,130,246,.5)"></div>
+      <div style="position:absolute;inset:-8px;border-radius:50%;background:rgba(59,130,246,.2);animation:pulse 2s infinite"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="map-controls">
+      <button class="map-ctrl-btn" onclick="showToast('📍 Centralizando mapa...')">🎯</button>
+      <button class="map-ctrl-btn" onclick="showToast('🔍 Zoom aplicado!')">+</button>
+      <button class="map-ctrl-btn" onclick="showToast('🔍 Zoom reduzido!')">−</button>
+    </div>
+
+    <!-- Map Popup -->
+    <div class="map-popup" id="map-popup">
+      <div class="map-popup-header">
+        <div class="map-popup-icon" id="popup-icon">🛒</div>
+        <div>
+          <div class="map-popup-title" id="popup-title">Nome do Local</div>
+          <div class="map-popup-sub" id="popup-sub">Info do local</div>
+        </div>
+        <button onclick="closeMapPopup()" style="margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;color:var(--n400)">✕</button>
+      </div>
+      <div class="map-popup-actions">
+        <button class="popup-btn primary" id="popup-open-btn">Ver detalhes</button>
+        <button class="popup-btn secondary" onclick="showToast('🗺️ Rota traçada no mapa!')">Rota</button>
+        <button class="popup-btn secondary" onclick="showToast('🔮 Abrindo A.R.!')">A.R.</button>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-tabs">
+    <button class="tab-item" onclick="goTo('home')"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
+    <button class="tab-item active" onclick="goTo('map')"><span class="tab-icon">🗺️</span><span class="tab-label">Mapa</span></button>
+    <button class="tab-item" onclick="goTo('missions')"><div class="tab-icon-wrap"><span class="tab-icon">⚡</span><span class="tab-badge">3</span></div><span class="tab-label">Missões</span></button>
+    <button class="tab-item" onclick="goTo('ranking')"><span class="tab-icon">🏆</span><span class="tab-label">Ranking</span></button>
+    <button class="tab-item" onclick="goTo('profile')"><span class="tab-icon">👤</span><span class="tab-label">Perfil</span></button>
+  </div>
+</div>
+
+<!-- =================== MISSIONS =================== -->
+<div class="screen" id="screen-missions">
+  <div class="top-nav">
+    <div class="top-nav-logo display">Missões</div>
+    <div class="nav-actions">
+      <div class="xp-pill">🔥 5 dias</div>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <div class="missions-hero">
+      <h2>Suas Missões</h2>
+      <p>Complete desafios e ganhe XP, medalhas e recompensas exclusivas</p>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:10px">
+        <span style="color:rgba(255,255,255,.7);font-size:13px">Streak esta semana:</span>
+        <div class="streak-bar" style="flex:1">
+          <div class="streak-day done"></div><div class="streak-day done"></div>
+          <div class="streak-day done"></div><div class="streak-day done"></div>
+          <div class="streak-day done"></div><div class="streak-day"></div><div class="streak-day"></div>
+        </div>
+      </div>
+    </div>
+    <div class="missions-tabs">
+      <div class="missions-tab active" onclick="switchMissionsTab(this,'daily')">Diárias</div>
+      <div class="missions-tab" onclick="switchMissionsTab(this,'weekly')">Semanais</div>
+      <div class="missions-tab" onclick="switchMissionsTab(this,'special')">Especiais</div>
+    </div>
+    <div id="missions-content" style="padding:16px">
+      <!-- Daily Missions -->
+      <div id="tab-daily">
+        <div class="challenge-card" onclick="completeMission(this)">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:var(--g100)">🛒</div>
+            <div class="challenge-info">
+              <h4>Visitar Feira Local</h4>
+              <p>Faça check-in em qualquer feira da cidade</p>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+150 XP</span>
+              <span class="reward-medal">🏅 Comprador Local</span>
+            </div>
+            <span class="challenge-status todo">→ Fazer</span>
+          </div>
+        </div>
+        <div class="challenge-card" onclick="completeMission(this)">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:linear-gradient(135deg,#ede9fe,#dbeafe)">🔮</div>
+            <div class="challenge-info">
+              <h4>Explorar com A.R.</h4>
+              <p>Use a Realidade Aumentada em qualquer local</p>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+200 XP</span>
+              <span class="reward-medal">🥽 Explorador Digital</span>
+            </div>
+            <span class="challenge-status todo">→ Fazer</span>
+          </div>
+        </div>
+        <div class="challenge-card">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:#fef9c3">🎵</div>
+            <div class="challenge-info">
+              <h4>Evento Cultural</h4>
+              <p>Participe de um evento de música ou arte</p>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+180 XP</span>
+              <span class="reward-medal">🎭 Amante da Arte</span>
+            </div>
+            <span class="challenge-status done">✓ Concluído</span>
+          </div>
+        </div>
+        <div class="challenge-card" onclick="completeMission(this)">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:var(--b100)">👥</div>
+            <div class="challenge-info">
+              <h4>Convidar um Amigo</h4>
+              <p>Compartilhe o LocalQuest com alguém</p>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+100 XP</span>
+              <span class="reward-medal">🤝 Conector</span>
+            </div>
+            <span class="challenge-status todo">→ Fazer</span>
+          </div>
+        </div>
+      </div>
+      <!-- Weekly Missions (hidden by default) -->
+      <div id="tab-weekly" style="display:none">
+        <div class="challenge-card" onclick="completeMission(this)">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:var(--g100)">🌱</div>
+            <div class="challenge-info">
+              <h4>Semana Verde</h4>
+              <p>Visite 3 iniciativas sustentáveis esta semana</p>
+            </div>
+          </div>
+          <div style="padding:0 16px 12px">
+            <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:66%"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:5px">
+              <span style="font-size:12px;color:var(--n500)">2 de 3 concluídos</span>
+              <span style="font-size:12px;color:var(--g600);font-weight:700">66%</span>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+500 XP</span>
+              <span class="reward-medal">🌍 Eco Warrior</span>
+            </div>
+            <span class="challenge-status inprogress">⏳ Em progresso</span>
+          </div>
+        </div>
+        <div class="challenge-card" onclick="completeMission(this)">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:#fef9c3">🗺️</div>
+            <div class="challenge-info">
+              <h4>Desbravador Urbano</h4>
+              <p>Explore 5 bairros diferentes esta semana</p>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+750 XP</span>
+              <span class="reward-medal">🗺️ Cartógrafo</span>
+            </div>
+            <span class="challenge-status todo">→ Fazer</span>
+          </div>
+        </div>
+      </div>
+      <!-- Special Missions (hidden by default) -->
+      <div id="tab-special" style="display:none">
+        <div style="background:linear-gradient(135deg,#7c3aed,#2563eb);border-radius:var(--radius);padding:20px;margin-bottom:12px;color:#fff">
+          <div style="font-size:11px;font-weight:700;opacity:.7;letter-spacing:.5px;margin-bottom:8px">🎯 MISSÃO ESPECIAL</div>
+          <div style="font-size:18px;font-weight:700;margin-bottom:6px">Fundador da Comunidade</div>
+          <div style="font-size:14px;opacity:.8;margin-bottom:16px">Convide 5 amigos e organize um encontro no bairro</div>
+          <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:20%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;opacity:.8">
+            <span>1 de 5 amigos</span><span>+2000 XP + Badge Exclusivo</span>
+          </div>
+        </div>
+        <div class="challenge-card" onclick="completeMission(this)">
+          <div class="challenge-header">
+            <div class="challenge-icon" style="background:linear-gradient(135deg,#fef9c3,#fde68a)">⭐</div>
+            <div class="challenge-info">
+              <h4>Crítico Gastronômico</h4>
+              <p>Avalie 10 produtores ou restaurantes locais</p>
+            </div>
+          </div>
+          <div class="challenge-footer">
+            <div class="challenge-reward">
+              <span class="reward-xp">+300 XP</span>
+              <span class="reward-medal">⭐ Gourmet</span>
+            </div>
+            <span class="challenge-status todo">→ Fazer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-tabs">
+    <button class="tab-item" onclick="goTo('home')"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
+    <button class="tab-item" onclick="goTo('map')"><span class="tab-icon">🗺️</span><span class="tab-label">Mapa</span></button>
+    <button class="tab-item active" onclick="goTo('missions')"><div class="tab-icon-wrap"><span class="tab-icon">⚡</span></div><span class="tab-label">Missões</span></button>
+    <button class="tab-item" onclick="goTo('ranking')"><span class="tab-icon">🏆</span><span class="tab-label">Ranking</span></button>
+    <button class="tab-item" onclick="goTo('profile')"><span class="tab-icon">👤</span><span class="tab-label">Perfil</span></button>
+  </div>
+</div>
+
+<!-- =================== RANKING =================== -->
+<div class="screen" id="screen-ranking">
+  <div class="top-nav">
+    <div class="top-nav-logo display">Ranking</div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" onclick="showToast('📅 Ranking da semana!')">📅</button>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <div class="ranking-hero">
+      <h2>🏆 Top Exploradores</h2>
+      <p>Semana de 09 a 15 de Junho • São Paulo</p>
+      <div class="podium">
+        <div class="podium-item">
+          <div class="podium-avatar">🦊</div>
+          <div class="podium-name">Camila M.</div>
+          <div class="podium-base second">2</div>
+        </div>
+        <div class="podium-item">
+          <div class="podium-avatar first">🦁</div>
+          <div class="podium-name">Lucas A.</div>
+          <div class="podium-base first">👑</div>
+        </div>
+        <div class="podium-item">
+          <div class="podium-avatar">🐺</div>
+          <div class="podium-name">Julia R.</div>
+          <div class="podium-base third">3</div>
+        </div>
+      </div>
+    </div>
+    <div class="rank-list">
+      <div class="rank-item">
+        <div class="rank-num">1</div>
+        <div class="rank-avatar" style="background:var(--b100)">🦁</div>
+        <div class="rank-info"><div class="rank-name">Lucas Almeida</div><div class="rank-sub">Nv. 12 • 15 eventos</div></div>
+        <div class="rank-xp">4.820</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">2</div>
+        <div class="rank-avatar" style="background:var(--g100)">🦊</div>
+        <div class="rank-info"><div class="rank-name">Camila Mendes</div><div class="rank-sub">Nv. 11 • 12 eventos</div></div>
+        <div class="rank-xp">4.310</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">3</div>
+        <div class="rank-avatar" style="background:#fef9c3">🐺</div>
+        <div class="rank-info"><div class="rank-name">Julia Rocha</div><div class="rank-sub">Nv. 10 • 11 eventos</div></div>
+        <div class="rank-xp">3.980</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">4</div>
+        <div class="rank-avatar" style="background:var(--b100)">🦅</div>
+        <div class="rank-info"><div class="rank-name">Pedro Santos</div><div class="rank-sub">Nv. 9 • 9 eventos</div></div>
+        <div class="rank-xp">3.450</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">5</div>
+        <div class="rank-avatar" style="background:var(--g100)">🌺</div>
+        <div class="rank-info"><div class="rank-name">Ana Costa</div><div class="rank-sub">Nv. 9 • 8 eventos</div></div>
+        <div class="rank-xp">3.200</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">6</div>
+        <div class="rank-avatar" style="background:#fef9c3">🦋</div>
+        <div class="rank-info"><div class="rank-name">Marcos Oliveira</div><div class="rank-sub">Nv. 8 • 7 eventos</div></div>
+        <div class="rank-xp">2.890</div>
+      </div>
+      <div class="rank-item me">
+        <div class="rank-num" style="color:var(--g600)">7</div>
+        <div class="rank-avatar" style="background:var(--grad-main)">😎</div>
+        <div class="rank-info"><div class="rank-name" style="color:var(--g700)">Rafael Mendes (Você)</div><div class="rank-sub">Nv. 8 • 6 eventos</div></div>
+        <div class="rank-xp">2.340</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">8</div>
+        <div class="rank-avatar" style="background:var(--b100)">🐬</div>
+        <div class="rank-info"><div class="rank-name">Sofia Lima</div><div class="rank-sub">Nv. 7 • 5 eventos</div></div>
+        <div class="rank-xp">1.980</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">9</div>
+        <div class="rank-avatar" style="background:var(--g100)">🦋</div>
+        <div class="rank-info"><div class="rank-name">Gabriel Ferreira</div><div class="rank-sub">Nv. 6 • 4 eventos</div></div>
+        <div class="rank-xp">1.650</div>
+      </div>
+      <div class="rank-item">
+        <div class="rank-num">10</div>
+        <div class="rank-avatar" style="background:#fef9c3">🌸</div>
+        <div class="rank-info"><div class="rank-name">Isabela Nunes</div><div class="rank-sub">Nv. 6 • 4 eventos</div></div>
+        <div class="rank-xp">1.420</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-tabs">
+    <button class="tab-item" onclick="goTo('home')"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
+    <button class="tab-item" onclick="goTo('map')"><span class="tab-icon">🗺️</span><span class="tab-label">Mapa</span></button>
+    <button class="tab-item" onclick="goTo('missions')"><div class="tab-icon-wrap"><span class="tab-icon">⚡</span><span class="tab-badge">3</span></div><span class="tab-label">Missões</span></button>
+    <button class="tab-item active" onclick="goTo('ranking')"><span class="tab-icon">🏆</span><span class="tab-label">Ranking</span></button>
+    <button class="tab-item" onclick="goTo('profile')"><span class="tab-icon">👤</span><span class="tab-label">Perfil</span></button>
+  </div>
+</div>
+
+<!-- =================== PROFILE =================== -->
+<div class="screen" id="screen-profile">
+  <div class="top-nav">
+    <div class="top-nav-logo display">Perfil</div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" onclick="showRewards()">🎁</button>
+      <button class="nav-icon-btn" onclick="showToast('⚙️ Configurações em breve!')">⚙️</button>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <div class="profile-hero">
+      <div class="profile-avatar">😎</div>
+      <div class="profile-name">Rafael Mendes</div>
+      <div class="profile-level">🌿 Nível 8 – Explorador Urbano</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">
+        <span class="tag tag-green">🌱 Sustentabilidade</span>
+        <span class="tag tag-purple">🎨 Arte</span>
+        <span class="tag tag-yellow">🍕 Gastronomia</span>
+      </div>
+    </div>
+    <div class="profile-stats-card">
+      <div class="profile-stat"><div class="profile-stat-val">2.340</div><div class="profile-stat-lbl">XP Total</div></div>
+      <div class="profile-stat"><div class="profile-stat-val">47</div><div class="profile-stat-lbl">Eventos</div></div>
+      <div class="profile-stat"><div class="profile-stat-val">12</div><div class="profile-stat-lbl">Medalhas</div></div>
+    </div>
+
+    <!-- Level Progress -->
+    <div class="section" style="margin-top:20px">
+      <div class="section-title" style="margin-bottom:12px">⚡ Progresso de Nível</div>
+      <div style="background:var(--n0);border-radius:var(--radius);padding:16px;border:1.5px solid var(--n100)">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:14px;font-weight:600;color:var(--n700)">Nível 8 → Nível 9</span>
+          <span style="font-size:14px;font-weight:700;color:var(--g600)">660 XP restantes</span>
+        </div>
+        <div class="level-bar" style="height:10px"><div class="level-bar-fill" style="width:78%"></div></div>
+        <div style="font-size:12px;color:var(--n400);margin-top:8px">2.340 / 3.000 XP</div>
+      </div>
+    </div>
+
+    <!-- Medals -->
+    <div class="section" style="margin-top:20px">
+      <div class="section-header">
+        <div class="section-title">🏅 Conquistas</div>
+        <div class="section-link" onclick="showToast('🏅 Todas as conquistas!')">Ver todas</div>
+      </div>
+      <div class="medals-grid" style="margin-top:12px">
+        <div class="medal-item earned" onclick="showToast('🛒 Comprador Local conquistado!')"><div class="medal-emoji">🛒</div><div class="medal-name">Comprador Local</div></div>
+        <div class="medal-item earned" onclick="showToast('📍 Primeira chegada conquistada!')"><div class="medal-emoji">📍</div><div class="medal-name">Primeiro Check-in</div></div>
+        <div class="medal-item earned" onclick="showToast('🔮 Explorador A.R. conquistado!')"><div class="medal-emoji">🔮</div><div class="medal-name">Explorador A.R.</div></div>
+        <div class="medal-item earned" onclick="showToast('🌱 Verde conectado!')"><div class="medal-emoji">🌱</div><div class="medal-name">Verde Conectado</div></div>
+        <div class="medal-item earned" onclick="showToast('🎵 Amante da Cultura!')"><div class="medal-emoji">🎵</div><div class="medal-name">Amante Cultura</div></div>
+        <div class="medal-item earned" onclick="showToast('🤝 Conector Social!')"><div class="medal-emoji">🤝</div><div class="medal-name">Conector Social</div></div>
+        <div class="medal-item locked"><div class="medal-emoji">👑</div><div class="medal-name">Lendário</div></div>
+        <div class="medal-item locked"><div class="medal-emoji">🌍</div><div class="medal-name">Eco Warrior</div></div>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="section" style="margin-top:20px;margin-bottom:24px">
+      <div class="section-header">
+        <div class="section-title">📅 Histórico</div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="history-item"><div class="history-icon">🛒</div><div class="history-info"><div class="history-name">Feira Orgânica Liberdade</div><div class="history-meta">Check-in • 14 Jun 2025</div></div><div class="history-xp">+100 XP</div></div>
+        <div class="history-item"><div class="history-icon">🔮</div><div class="history-info"><div class="history-name">Tour A.R. – Mercado Municipal</div><div class="history-meta">Missão especial • 13 Jun 2025</div></div><div class="history-xp">+200 XP</div></div>
+        <div class="history-item"><div class="history-icon">🎷</div><div class="history-info"><div class="history-name">Jazz no Parque Trianon</div><div class="history-meta">Evento cultural • 11 Jun 2025</div></div><div class="history-xp">+180 XP</div></div>
+        <div class="history-item"><div class="history-icon">🎨</div><div class="history-info"><div class="history-name">Grafite Coletivo Bom Retiro</div><div class="history-meta">Arte urbana • 08 Jun 2025</div></div><div class="history-xp">+150 XP</div></div>
+      </div>
+    </div>
+
+    <!-- Share / Invite -->
+    <div style="padding:0 20px 32px">
+      <div style="background:linear-gradient(135deg,#16a34a,#0284c7);border-radius:var(--radius);padding:20px;text-align:center;color:#fff">
+        <div style="font-size:24px;margin-bottom:8px">🎉</div>
+        <div style="font-size:17px;font-weight:700;margin-bottom:4px">Convide seus amigos!</div>
+        <div style="font-size:13px;opacity:.8;margin-bottom:14px">Ganhe 100 XP por amigo que se cadastrar</div>
+        <button onclick="showInvite()" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:10px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer;width:100%;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.3)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">Compartilhar convite</button>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-tabs">
+    <button class="tab-item" onclick="goTo('home')"><span class="tab-icon">🏠</span><span class="tab-label">Home</span></button>
+    <button class="tab-item" onclick="goTo('map')"><span class="tab-icon">🗺️</span><span class="tab-label">Mapa</span></button>
+    <button class="tab-item" onclick="goTo('missions')"><div class="tab-icon-wrap"><span class="tab-icon">⚡</span><span class="tab-badge">3</span></div><span class="tab-label">Missões</span></button>
+    <button class="tab-item" onclick="goTo('ranking')"><span class="tab-icon">🏆</span><span class="tab-label">Ranking</span></button>
+    <button class="tab-item active" onclick="goTo('profile')"><span class="tab-icon">👤</span><span class="tab-label">Perfil</span></button>
+  </div>
+</div>
+
+<!-- =================== EVENT DETAIL =================== -->
+<div class="screen" id="screen-event">
+  <div style="position:relative">
+    <div class="event-detail-img" id="event-img">🌿</div>
+    <button class="back-btn" onclick="goBack()">←</button>
+    <button onclick="showToast('❤️ Salvo nos favoritos!')" style="position:absolute;top:20px;right:20px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10">🤍</button>
+  </div>
+  <div class="scroll-area" style="padding-bottom:calc(var(--tab-h) + 80px)">
+    <div class="event-detail-header">
+      <div class="event-detail-category" id="event-cat">🌱 Sustentabilidade</div>
+      <div class="event-detail-title" id="event-title">Feira Orgânica Vila Madalena</div>
+      <div class="event-meta-row">📍 <span id="event-loc">Praça Benedito Calixto, Vila Madalena</span></div>
+      <div class="event-meta-row">📅 <span id="event-date">Sábado, 15 de Junho • 09h às 14h</span></div>
+      <div class="event-meta-row">⭐ <span id="event-rating">4.8 (234 avaliações)</span></div>
+      <div class="participants">
+        <div class="participant-avatar">😊</div><div class="participant-avatar">🦊</div>
+        <div class="participant-avatar">😎</div><div class="participant-avatar">🌸</div>
+        <div class="participant-avatar">🦁</div>
+        <div class="participant-count">+128 pessoas vão</div>
+      </div>
+      <div class="event-desc" id="event-desc">Uma das feiras orgânicas mais queridas de São Paulo, a Feira da Benedito Calixto reúne produtores locais, artesãos e projetos sociais toda semana. Encontre orgânicos frescos, produtos artesanais, gastronomia local e muito mais em um ambiente vibrante e acolhedor.</div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+        <span class="xp-tag" style="padding:5px 12px;font-size:13px">+120 XP ao participar</span>
+        <span class="tag tag-green">Orgânico</span>
+        <span class="tag tag-blue">Acessível</span>
+        <span class="tag tag-yellow">Família</span>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div style="padding:0 20px">
+      <div class="section-title" style="margin-bottom:12px">⭐ Avaliações</div>
+      <div class="reviews-list">
+        <div class="review-item">
+          <div class="review-header">
+            <div class="review-avatar">🦊</div>
+            <div><div class="review-name">Camila M.</div><div class="review-stars">⭐⭐⭐⭐⭐</div></div>
+          </div>
+          <div class="review-text">Lugar incrível! Os produtos são fresquíssimos e os preços são justos. Adoro a energia da feira, sempre tem novidades.</div>
+        </div>
+        <div class="review-item">
+          <div class="review-header">
+            <div class="review-avatar">🦁</div>
+            <div><div class="review-name">Lucas A.</div><div class="review-stars">⭐⭐⭐⭐⭐</div></div>
+          </div>
+          <div class="review-text">Fui ontem pela primeira vez, encontrei o melhor mel artesanal que já provei. Os produtores são super atenciosos e explicam tudo sobre os produtos.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Actions -->
+  <div class="event-actions" style="position:sticky;bottom:0;background:var(--n0)">
+    <button class="ar-btn" onclick="openAR()">
+      🔮 Visitar com A.R.
+      <span class="ar-badge">NOVO</span>
+    </button>
+    <div class="event-secondary-actions">
+      <button class="sec-btn" onclick="showCheckin()">📍 Check-in</button>
+      <button class="sec-btn" onclick="showToast('🗺️ Rota traçada!')">🗺️ Rota</button>
+      <button class="sec-btn" onclick="showToast('📤 Link copiado!')">📤 Compartilhar</button>
+    </div>
+    <button class="checkin-btn" onclick="handleParticipate()">✅ Vou Participar</button>
+  </div>
+</div>
+
+<!-- =================== AR SCREEN =================== -->
+<div class="screen" id="screen-ar">
+  <div class="ar-viewport">
+    <div class="ar-env">
+      <!-- AR Environment -->
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,#0d3321 0%,#001a0a 60%,#000 100%)"></div>
+      <div class="ar-grid-floor"></div>
+      <div class="ar-wall-left"></div>
+      <div class="ar-wall-right"></div>
+      <div class="ar-ceiling"></div>
+
+      <!-- Ambient particles -->
+      <div style="position:absolute;inset:0;overflow:hidden">
+        <div style="position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(22,163,74,.6);top:20%;left:15%;animation:float 4s infinite 0s"></div>
+        <div style="position:absolute;width:2px;height:2px;border-radius:50%;background:rgba(22,163,74,.4);top:35%;left:70%;animation:float 5s infinite 1s"></div>
+        <div style="position:absolute;width:4px;height:4px;border-radius:50%;background:rgba(59,130,246,.5);top:60%;left:30%;animation:float 3.5s infinite .5s"></div>
+        <div style="position:absolute;width:2px;height:2px;border-radius:50%;background:rgba(22,163,74,.7);top:75%;left:80%;animation:float 4.5s infinite 2s"></div>
+        <div style="position:absolute;width:3px;height:3px;border-radius:50%;background:rgba(250,204,21,.5);top:45%;left:55%;animation:float 6s infinite 1.5s"></div>
+      </div>
+
+      <!-- Central Scene -->
+      <div class="ar-content">
+        <div style="text-align:center;position:relative;z-index:5">
+          <div class="ar-space" id="ar-main-emoji">🏛️</div>
+          <div style="color:rgba(22,163,74,.8);font-size:13px;margin-top:12px;font-weight:600;letter-spacing:1px">MODO EXPLORAÇÃO A.R.</div>
+        </div>
+      </div>
+
+      <!-- Hotspots -->
+      <div class="ar-hotspot" style="top:35%;left:20%" onclick="collectARXP(this,'Produto Orgânico','+25 XP')">
+        <div class="ar-hotspot-ring"></div>
+        <div class="ar-hotspot-dot">🥕</div>
+        <div class="ar-hotspot-label">Produto Orgânico</div>
+      </div>
+      <div class="ar-hotspot" style="top:45%;right:18%" onclick="collectARXP(this,'Artesanato Local','+30 XP')">
+        <div class="ar-hotspot-ring"></div>
+        <div class="ar-hotspot-dot">🧵</div>
+        <div class="ar-hotspot-label">Artesanato Local</div>
+      </div>
+      <div class="ar-hotspot" style="top:65%;left:35%" onclick="collectARXP(this,'Produtor Local','+40 XP')">
+        <div class="ar-hotspot-ring"></div>
+        <div class="ar-hotspot-dot">👨‍🌾</div>
+        <div class="ar-hotspot-label">Produtor Local</div>
+      </div>
+      <div class="ar-hotspot" style="top:55%;right:35%" onclick="collectARXP(this,'Item Raro 🌟','+80 XP')">
+        <div class="ar-hotspot-ring"></div>
+        <div class="ar-hotspot-dot" style="background:rgba(250,204,21,.9);box-shadow:0 0 20px rgba(250,204,21,.6)">⭐</div>
+        <div class="ar-hotspot-label">Item Raro!</div>
+      </div>
+    </div>
+
+    <!-- HUD -->
+    <div class="ar-hud">
+      <div class="ar-hud-left">
+        <div class="ar-badge-pill">
+          <span style="font-size:8px;background:var(--g500);padding:2px 6px;border-radius:4px;letter-spacing:.5px;font-weight:700">A.R. LIVE</span>
+          <span id="ar-xp-count">+0 XP coletados</span>
+        </div>
+        <div class="ar-badge-pill">
+          <span>🗺️</span><span id="ar-event-name">Feira Orgânica</span>
+        </div>
+      </div>
+      <button class="ar-close" onclick="goBack()">✕</button>
+    </div>
+
+    <!-- Bottom -->
+    <div class="ar-bottom">
+      <div class="ar-bottom-title" id="ar-bottom-title">Feira Orgânica Vila Madalena</div>
+      <div class="ar-bottom-sub">Toque nos hotspots para coletar XP e descobrir segredos 🔍</div>
+      <div class="ar-actions">
+        <button class="ar-action-btn primary" onclick="showCheckin()">📍 Fazer Check-in</button>
+        <button class="ar-action-btn secondary" onclick="showToast('📤 Experiência A.R. compartilhada!')">📤 Compartilhar</button>
+      </div>
+    </div>
+
+    <!-- XP Popup -->
+    <div class="ar-xp-popup" id="ar-xp-popup">
+      <div class="ar-xp-big" id="ar-xp-val">+25 XP</div>
+      <div class="ar-xp-label" id="ar-xp-desc">Coletado!</div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MODALS =================== -->
+
+<!-- CHECKIN MODAL -->
+<div class="modal-overlay" id="modal-checkin">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">Check-in realizado! 🎉</div>
+      <button class="modal-close" onclick="closeModal('checkin')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="checkin-success">
+        <div class="checkin-animation">📍</div>
+        <div class="checkin-title">Você chegou!</div>
+        <div class="checkin-sub">Obrigado por explorar sua cidade. Continue descobrindo novos lugares!</div>
+        <div class="xp-gained">
+          <div><div class="xp-gained-val">+100 XP</div><div class="xp-gained-lbl">XP ganhos</div></div>
+          <div style="width:1px;height:40px;background:var(--n200)"></div>
+          <div><div class="xp-gained-val">Nv. 8</div><div class="xp-gained-lbl">Seu nível</div></div>
+        </div>
+        <div class="badge-earned">
+          <div class="badge-earned-emoji">📍</div>
+          <div class="badge-earned-title">Badge desbloqueado!</div>
+          <div class="badge-earned-sub">Explorador Presente – 1 check-in realizado</div>
+        </div>
+        <button class="btn-primary" style="margin-top:20px" onclick="closeModal('checkin');addXP(100)">Incrível! Ver meu progresso</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REWARDS MODAL -->
+<div class="modal-overlay" id="modal-rewards">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🎁 Recompensas</div>
+      <button class="modal-close" onclick="closeModal('rewards')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="color:var(--n500);font-size:14px;margin-bottom:16px">Você tem <strong style="color:var(--g600)">2.340 XP</strong> para usar</div>
+      <div class="rewards-list">
+        <div class="reward-card" onclick="claimReward(this,'Café Grátis')">
+          <div class="reward-card-icon">☕</div>
+          <div class="reward-card-info">
+            <div class="reward-card-title">Café grátis – Café das Origens</div>
+            <div class="reward-card-sub">Válido até 30 Jun • 1 uso</div>
+          </div>
+          <div class="reward-card-cost">500 XP</div>
+        </div>
+        <div class="reward-card" onclick="claimReward(this,'Desconto Feira')">
+          <div class="reward-card-icon">🛒</div>
+          <div class="reward-card-info">
+            <div class="reward-card-title">10% off na Feira Orgânica</div>
+            <div class="reward-card-sub">Qualquer produto • Uso único</div>
+          </div>
+          <div class="reward-card-cost">800 XP</div>
+        </div>
+        <div class="reward-card" onclick="claimReward(this,'Ingresso Jazz')">
+          <div class="reward-card-icon">🎷</div>
+          <div class="reward-card-info">
+            <div class="reward-card-title">Ingresso Noite de Jazz</div>
+            <div class="reward-card-sub">Próxima edição • 1 ingresso</div>
+          </div>
+          <div class="reward-card-cost">1.500 XP</div>
+        </div>
+        <div class="reward-card reward-locked">
+          <div class="reward-card-icon">🎭</div>
+          <div class="reward-card-info">
+            <div class="reward-card-title">VIP Festival Gastronômico</div>
+            <div class="reward-card-sub">Acesso VIP + 3 vouchers</div>
+          </div>
+          <div class="reward-card-cost">3.000 XP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INVITE MODAL -->
+<div class="modal-overlay" id="modal-invite">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">👥 Convidar Amigos</div>
+      <button class="modal-close" onclick="closeModal('invite')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:16px 0">
+        <div style="font-size:48px;margin-bottom:12px">🎉</div>
+        <div style="font-size:16px;font-weight:700;color:var(--n900);margin-bottom:8px">Seu código de convite</div>
+        <div style="background:var(--g50);border:2px dashed var(--g300);border-radius:var(--radius);padding:20px;margin:16px 0">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:var(--g700);letter-spacing:4px">RAFA2025</div>
+          <div style="font-size:13px;color:var(--n500);margin-top:6px">Compartilhe este código com seus amigos</div>
+        </div>
+        <div style="background:var(--g100);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px">
+          <div style="font-size:14px;font-weight:600;color:var(--g700)">Você ganha 100 XP por amigo que se cadastrar!</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button onclick="showToast('📱 Link copiado!');closeModal('invite')" class="sec-btn">📋 Copiar link</button>
+          <button onclick="showToast('📤 Abrindo compartilhamento...');closeModal('invite')" style="background:var(--grad-main);color:#fff;border:none;border-radius:var(--radius-sm);padding:13px;font-size:13px;font-weight:700;cursor:pointer">📤 Compartilhar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✨ Mensagem</div>
+
+<script>
+// ===== STATE =====
+let currentScreen = 'splash';
+let previousScreen = 'home';
+let totalXP = 2340;
+let arXP = 0;
+let currentEvent = 'feira';
+
+const events = {
+  feira: {
+    emoji: '🌿', bg: 'linear-gradient(135deg,#16a34a,#15803d)',
+    cat: '🌱 Sustentabilidade', title: 'Feira Orgânica Vila Madalena',
+    loc: 'Praça Benedito Calixto, Vila Madalena', date: 'Sábado, 15 Jun • 09h às 14h',
+    rating: '4.8 (234 avaliações)',
+    desc: 'Uma das feiras orgânicas mais queridas de São Paulo, a Feira da Benedito Calixto reúne produtores locais, artesãos e projetos sociais toda semana. Encontre orgânicos frescos, produtos artesanais, gastronomia local e muito mais em um ambiente vibrante e acolhedor.'
+  },
+  jazz: {
+    emoji: '🎷', bg: 'linear-gradient(135deg,#7c3aed,#2563eb)',
+    cat: '🎵 Música', title: 'Noite de Jazz no Coreto',
+    loc: 'Parque Trianon, Av. Paulista', date: 'Amanhã, 16 Jun • 20h às 23h',
+    rating: '4.9 (189 avaliações)',
+    desc: 'Uma experiência musical única ao ar livre no coração de São Paulo. Reúne os melhores músicos de jazz da cidade para uma noite inesquecível com muito improviso, talento e conexão. Entrada gratuita, contribuição espontânea.'
+  },
+  arte: {
+    emoji: '🖼️', bg: 'linear-gradient(135deg,#f59e0b,#ef4444)',
+    cat: '🎨 Arte', title: 'Exposição Arte Urbana',
+    loc: 'Galeria do Bom Retiro, Rua Três Rios', date: 'Sábado, 22 Jun • 10h às 18h',
+    rating: '4.7 (156 avaliações)',
+    desc: 'Exposição coletiva que reúne 30 artistas urbanos de São Paulo em um espaço industrial transformado. Obras de street art, instalações interativas e performances ao vivo durante todo o dia. Uma celebração da cultura visual paulistana.'
+  },
+  gastro: {
+    emoji: '🍜', bg: 'linear-gradient(135deg,#dc2626,#9a3412)',
+    cat: '🍕 Gastronomia', title: 'Festival Gastronômico SP',
+    loc: 'Ibirapuera, Av. das Nações Unidas', date: 'Domingo, 23 Jun • 11h às 20h',
+    rating: '4.6 (412 avaliações)',
+    desc: 'O maior festival de gastronomia da cidade reúne mais de 60 chefs e produtores locais em uma única experiência culinária. De gastronomia periférica a alta cozinha, passando por fermentados artesanais e sobremesas autorais, tudo produzido com ingredientes locais.'
+  },
+  cafe: {
+    emoji: '☕', bg: 'linear-gradient(135deg,#92400e,#78350f)',
+    cat: '☕ Café & Cultura', title: 'Café das Origens',
+    loc: 'Rua Harmonia, 320, Vila Madalena', date: 'Aberto todos os dias • 08h às 20h',
+    rating: '4.9 (128 avaliações)',
+    desc: 'Café especialidade com foco em microlotes de produtores brasileiros. Cada xícara conta uma história de origem, altitude e colheita. Além do café excepcional, o espaço promove encontros, exposições e conexão com comunidades produtoras.'
+  },
+  mel: {
+    emoji: '🍯', bg: 'linear-gradient(135deg,#d97706,#92400e)',
+    cat: '🌱 Produção Local', title: 'Mel da Serra',
+    loc: 'Feira Benedito Calixto – Box 12', date: 'Sábados • 09h às 14h',
+    rating: '4.8 (87 avaliações)',
+    desc: 'Produção familiar de mel artesanal há 3 gerações. O Mel da Serra usa técnicas tradicionais e colmeias sustentáveis em altitude, resultando em méis únicos com sabores florais intensos. Certificação orgânica e comércio justo.'
+  },
+  horta: {
+    emoji: '🥬', bg: 'linear-gradient(135deg,#166534,#14532d)',
+    cat: '🌱 Sustentabilidade', title: 'Horta Comunitária',
+    loc: 'Praça Victor Civita, Pinheiros', date: 'Ter, Qui, Sáb • 07h às 11h',
+    rating: '5.0 (56 avaliações)',
+    desc: 'Projeto comunitário de agroecologia urbana que transforma espaços ociosos em hortas produtivas. Qualquer pessoa pode participar das atividades de cultivo e aprendizado. O projeto distribui os alimentos colhidos para famílias em vulnerabilidade alimentar.'
+  },
+  mercado: {
+    emoji: '🏛️', bg: 'linear-gradient(135deg,#1e3a5f,#0c4a6e)',
+    cat: '🏛️ Patrimônio', title: 'Mercado Municipal de SP',
+    loc: 'Rua da Cantareira, 306, Centro', date: 'Seg a Sáb • 06h às 18h',
+    rating: '4.7 (2.340 avaliações)',
+    desc: 'Inaugurado em 1933, o Mercadão é um dos maiores mercados públicos da América Latina. Com mais de 300 boxes, é o lar do famoso sanduíche de mortadela e espaço para produtores de todo o Brasil. Patrimônio histórico e gastronômico de São Paulo.'
+  }
+};
+
+// ===== NAVIGATION =====
+function goTo(screen) {
+  previousScreen = currentScreen;
+  showScreen('screen-' + screen);
+  currentScreen = screen;
+}
+
+function goBack() {
+  showScreen('screen-' + previousScreen);
+  currentScreen = previousScreen;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) { target.classList.add('active'); target.scrollTop = 0; }
+}
+
+// ===== AUTH =====
+function handleGoogleLogin() { showScreen('screen-onboarding'); currentScreen = 'onboarding'; showToast('🔵 Conectado com Google!'); }
+function handleAppleLogin() { showScreen('screen-onboarding'); currentScreen = 'onboarding'; showToast('⚫ Conectado com Apple!'); }
+function handleEmailLogin() {
+  const email = document.getElementById('auth-email').value;
+  if (!email) { showToast('⚠️ Preencha seu e-mail!'); return; }
+  showScreen('screen-onboarding'); currentScreen = 'onboarding';
+  showToast('✅ Bem-vindo ao LocalQuest!');
+}
+
+// ===== ONBOARDING =====
+function toggleInterest(el) { el.classList.toggle('selected'); }
+function finishOnboarding() {
+  const selected = document.querySelectorAll('.interest-card.selected').length;
+  if (selected === 0) { showToast('⚠️ Selecione pelo menos 1 interesse!'); return; }
+  showScreen('screen-home'); currentScreen = 'home';
+  showToast('🎉 Bem-vindo ao LocalQuest! +50 XP de boas-vindas');
+  setTimeout(() => addXP(50), 600);
+}
+
+// ===== EVENTS =====
+function openEvent(key) {
+  currentEvent = key;
+  const ev = events[key];
+  if (!ev) return;
+  const img = document.getElementById('event-img');
+  img.style.background = ev.bg;
+  img.style.fontSize = '80px';
+  img.textContent = ev.emoji;
+  document.getElementById('event-cat').textContent = ev.cat;
+  document.getElementById('event-title').textContent = ev.title;
+  document.getElementById('event-loc').textContent = ev.loc;
+  document.getElementById('event-date').textContent = ev.date;
+  document.getElementById('event-rating').textContent = ev.rating;
+  document.getElementById('event-desc').textContent = ev.desc;
+  previousScreen = currentScreen;
+  showScreen('screen-event');
+  currentScreen = 'event';
+}
+
+// ===== AR =====
+function openAR() {
+  arXP = 0;
+  document.getElementById('ar-xp-count').textContent = '+0 XP coletados';
+  const ev = events[currentEvent] || events['feira'];
+  document.getElementById('ar-event-name').textContent = ev.title.split(' ').slice(0,3).join(' ');
+  document.getElementById('ar-bottom-title').textContent = ev.title;
+  document.getElementById('ar-main-emoji').textContent = ev.emoji;
+  // Reset hotspots
+  document.querySelectorAll('.ar-hotspot').forEach(h => { h.style.opacity = '1'; h.style.pointerEvents = 'auto'; });
+  previousScreen = currentScreen;
+  showScreen('screen-ar');
+  currentScreen = 'ar';
+  showToast('🔮 Modo A.R. ativado! Explore os hotspots');
+}
+
+function collectARXP(el, name, xpStr) {
+  const xpVal = parseInt(xpStr.replace('+','').replace(' XP',''));
+  arXP += xpVal;
+  el.style.opacity = '0.3';
+  el.style.pointerEvents = 'none';
+  document.getElementById('ar-xp-count').textContent = '+' + arXP + ' XP coletados';
+  const popup = document.getElementById('ar-xp-popup');
+  document.getElementById('ar-xp-val').textContent = xpStr;
+  document.getElementById('ar-xp-desc').textContent = name + ' descoberto!';
+  popup.classList.add('show');
+  setTimeout(() => popup.classList.remove('show'), 2000);
+  showToast('✨ ' + name + ' – ' + xpStr + ' coletados!');
+}
+
+// ===== MAP =====
+function showMapPopup(key, icon, title, sub) {
+  document.getElementById('popup-icon').textContent = icon;
+  document.getElementById('popup-title').textContent = title;
+  document.getElementById('popup-sub').textContent = sub;
+  const btn = document.getElementById('popup-open-btn');
+  btn.onclick = () => { closeMapPopup(); openEvent(key); };
+  document.getElementById('map-popup').classList.add('visible');
+}
+function closeMapPopup() { document.getElementById('map-popup').classList.remove('visible'); }
+function filterMap(el, label) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  showToast('🗺️ Mostrando: ' + label);
+}
+
+// ===== MISSIONS =====
+function switchMissionsTab(el, tab) {
+  document.querySelectorAll('.missions-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-daily').style.display = 'none';
+  document.getElementById('tab-weekly').style.display = 'none';
+  document.getElementById('tab-special').style.display = 'none';
+  document.getElementById('tab-' + tab).style.display = 'block';
+}
+
+function completeMission(card) {
+  const statusEl = card.querySelector('.challenge-status');
+  if (statusEl && statusEl.classList.contains('done')) { showToast('✅ Missão já concluída!'); return; }
+  if (statusEl) {
+    statusEl.textContent = '✓ Concluído';
+    statusEl.className = 'challenge-status done';
+  }
+  const xpEl = card.querySelector('.reward-xp');
+  const xpStr = xpEl ? xpEl.textContent : '+100 XP';
+  const xpVal = parseInt(xpStr.replace('+','').replace(' XP','')) || 100;
+  addXP(xpVal);
+  showToast('🎉 Missão concluída! ' + xpStr + ' ganhos');
+}
+
+function startMission(card, name) {
+  showToast('⚡ Missão "' + name + '" iniciada!');
+}
+
+// ===== CHECKIN =====
+function showCheckin() {
+  document.getElementById('modal-checkin').classList.add('open');
+}
+function handleParticipate() {
+  showCheckin();
+}
+
+// ===== REWARDS =====
+function showRewards() {
+  document.getElementById('modal-rewards').classList.add('open');
+}
+function claimReward(el, name) {
+  if (el.classList.contains('reward-locked')) { showToast('🔒 XP insuficiente!'); return; }
+  showToast('🎁 Recompensa "' + name + '" resgatada!');
+  closeModal('rewards');
+  el.style.opacity = '.5';
+  el.style.pointerEvents = 'none';
+}
+
+// ===== INVITE =====
+function showInvite() {
+  document.getElementById('modal-invite').classList.add('open');
+}
+
+// ===== MODALS =====
+function closeModal(name) {
+  document.getElementById('modal-' + name).classList.remove('open');
+  if (name === 'checkin') { addXP(100); }
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) {
+      const id = this.id.replace('modal-', '');
+      closeModal(id);
+    }
+  });
+});
+
+// ===== XP SYSTEM =====
+function addXP(amount) {
+  totalXP += amount;
+  const display = document.getElementById('home-xp-display');
+  if (display) display.textContent = totalXP.toLocaleString('pt-BR');
+  // Update level bar
+  const fill = document.querySelector('.level-bar-fill');
+  if (fill) {
+    const pct = Math.min((totalXP / 3000) * 100, 100);
+    fill.style.width = pct + '%';
+  }
+  if (totalXP >= 3000) {
+    showToast('🎊 LEVEL UP! Você subiu para o Nível 9!');
+    totalXP = totalXP - 3000;
+  }
+}
+
+// ===== TOAST =====
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ===== SPLASH =====
+setTimeout(() => {
+  showScreen('screen-auth');
+  currentScreen = 'auth';
+}, 2200);
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  // Animate level bar on load
+  setTimeout(() => {
+    const fill = document.querySelector('.level-bar-fill');
+    if (fill) fill.classList.add('animated');
+  }, 300);
+});
+</script>
+</body>
+</html>
